@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:orderapp/customersearchform.dart';
 import 'dart:convert';
 
 import 'package:orderapp/widgets/customappbar.dart';
@@ -24,74 +25,35 @@ class _CreateBranchState extends State<products> {
   final dobController = TextEditingController();
   final dojController = TextEditingController();
   final domController = TextEditingController();
-  final TextEditingController _staffIdController = TextEditingController();
-  final TextEditingController _staffNameController = TextEditingController();
-
-  final TextEditingController _mobileNoController = TextEditingController();
-  final TextEditingController _userNameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _branchCodeController = TextEditingController();
-  final TextEditingController _receiptNoController = TextEditingController();
-  final TextEditingController _companyIdController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  String? selectedBranch;
+  final TextEditingController productCodeController = TextEditingController();
+  final TextEditingController productNameController = TextEditingController();
+  final TextEditingController qtyController = TextEditingController();
+  final TextEditingController noOfKgsController = TextEditingController();
+  final TextEditingController salesRateController = TextEditingController();
+  final TextEditingController wholeSaleRateController = TextEditingController();
+  final TextEditingController purchaseRateController = TextEditingController();
+  final TextEditingController mrpController = TextEditingController();
+  final TextEditingController gstController = TextEditingController();
+  String? selectedGstType;
   String? selectedRights;
-  String? selectedBranchName;
-  String? _staffId;
+  String? selectedPurchaseUnit;
+  String? selectedSalesUnit;
   // @override
   // void didChangeDependencies() {
   //   super.didChangeDependencies();
   //   fetchBranches(); // Fetch branches when the widget dependencies change
   // }
 
-  Future<List<Map<String, dynamic>>> fetchBranches() async {
-    const String apiUrl = 'https://chits.tutytech.in/branch.php';
-
-    try {
-      // Print the request URL
-      print('Request URL: $apiUrl');
-
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {'type': 'select'},
-      );
-
-      // Print the response body
-      print('Response Body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body) as List<dynamic>;
-
-        return responseData.map((branch) {
-          return {
-            'id': branch['id'] ?? '',
-            'branchname': branch['branchname'] ?? 'Unknown Branch',
-            'openingbalance': branch['openingbalance']?.toString() ?? '0',
-            'openingdate': branch['openingdate'] ?? 'N/A',
-          };
-        }).toList();
-      } else {
-        throw Exception('Failed to fetch branches');
-      }
-    } catch (e) {
-      print('Error: $e');
-      throw Exception('Error: $e');
-    }
-  }
-
-  Future<void> _createStaff() async {
+  Future<void> _createProduts() async {
     // Check if the form is valid
-    if (!(_formKey.currentState?.validate() ?? false)) {
-      return; // Exit the method if validation fails
-    }
-    final String apiUrl = 'https://chits.tutytech.in/staff.php';
+
+    final String apiUrl = 'https://varav.tutytech.in/product.php';
 
     try {
       // Print the request URL and body for debugging
       print('Request URL: $apiUrl');
       print(
-        'Request body: ${{'type': 'insert', 'staffId': _staffIdController.text, 'staffName': _staffNameController.text, 'address': _addressController.text, 'mobileNo': _mobileNoController.text, 'userName': _userNameController.text, 'password': _passwordController.text, 'branch': selectedBranchName, 'branchCode': _branchCodeController.text, 'receiptNo': _receiptNoController.text, 'rights': selectedRights, 'companyid': _companyIdController.text, 'email': _emailController.text}}',
+        'Request body: ${{'type': 'insert', 'productcode': productCodeController.text, 'productname': productNameController.text, 'purchaseunit': selectedPurchaseUnit, 'qty': qtyController.text, 'salesunit': selectedSalesUnit, 'kg': noOfKgsController.text, 'salesrate': salesRateController.text, 'wholesalerate': wholeSaleRateController.text, 'purchaserate': purchaseRateController.text, 'mrp': mrpController.text, 'gst': gstController.text, 'gsttype': selectedGstType}}',
       );
 
       final response = await http.post(
@@ -99,18 +61,18 @@ class _CreateBranchState extends State<products> {
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
           'type': 'insert',
-          'staffId': _staffIdController.text,
-          'staffName': _staffNameController.text,
-          'address': _addressController.text,
-          'mobileNo': _mobileNoController.text,
-          'userName': _userNameController.text,
-          'password': _passwordController.text,
-          'branch': selectedBranchName,
-          'branchCode': _branchCodeController.text,
-          'receiptNo': _receiptNoController.text,
-          'rights': selectedRights,
-          'companyid': _companyIdController.text,
-          'email': _emailController.text,
+          'productcode': productCodeController.text,
+          'productname': productNameController.text,
+          'purchaseunit': selectedPurchaseUnit,
+          'qty': qtyController.text,
+          'salesunit': selectedSalesUnit,
+          'kg': noOfKgsController.text,
+          'salesrate': salesRateController.text,
+          'wholesalerate': wholeSaleRateController.text,
+          'purchaserate': purchaseRateController.text,
+          'mrp': mrpController.text,
+          'gst': gstController.text,
+          'gsttype': selectedGstType,
         },
       );
 
@@ -121,28 +83,9 @@ class _CreateBranchState extends State<products> {
         final responseData = json.decode(response.body);
 
         // Check if responseData contains staffId
-        if (responseData is List && responseData.isNotEmpty) {
-          _staffId =
-              responseData[0]['id']; // Assuming 'id' is the field for staffId
-          if (_staffId != null) {
-            print('Extracted staffId: $_staffId'); // Debugging
-            _showSnackBar('Staff created successfully! ID: $_staffId');
-            // Navigator.push(
-            //   context,
-            //   MaterialPageRoute(
-            //     builder: (context) =>
-            //         CreateCustomer(staffId: staffId), // Pass staffId
-            //   ),
-            // );
-          } else {
-            _showSnackBar('Error: Staff ID is null.');
-          }
-        } else {
-          _showSnackBar('Error: Invalid response format.');
-        }
       } else {
         _showSnackBar(
-          'Failed to create staff. Status code: ${response.statusCode}',
+          'Failed to create ledger. Status code: ${response.statusCode}',
         );
       }
     } catch (e) {
@@ -185,6 +128,7 @@ class _CreateBranchState extends State<products> {
 
                       // Product Code
                       TextFormField(
+                        controller: productCodeController,
                         decoration: const InputDecoration(
                           labelText: "Product Code",
                           border: OutlineInputBorder(),
@@ -194,6 +138,7 @@ class _CreateBranchState extends State<products> {
 
                       // Product Name
                       TextFormField(
+                        controller: productNameController,
                         decoration: const InputDecoration(
                           labelText: "Product Name",
                           border: OutlineInputBorder(),
@@ -211,6 +156,7 @@ class _CreateBranchState extends State<products> {
                                 labelText: "Purchase Unit",
                                 border: OutlineInputBorder(),
                               ),
+                              value: selectedPurchaseUnit,
                               items:
                                   ["Unit 1", "Unit 2", "Unit 3"]
                                       .map(
@@ -220,13 +166,18 @@ class _CreateBranchState extends State<products> {
                                         ),
                                       )
                                       .toList(),
-                              onChanged: (value) {},
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedPurchaseUnit = value;
+                                });
+                              },
                             ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
                             flex: 1,
                             child: TextFormField(
+                              controller: qtyController,
                               decoration: const InputDecoration(
                                 labelText: "Qty",
                                 border: OutlineInputBorder(),
@@ -248,6 +199,7 @@ class _CreateBranchState extends State<products> {
                                 labelText: "Sales Unit",
                                 border: OutlineInputBorder(),
                               ),
+                              value: selectedSalesUnit,
                               items:
                                   ["Unit 1", "Unit 2", "Unit 3"]
                                       .map(
@@ -257,13 +209,18 @@ class _CreateBranchState extends State<products> {
                                         ),
                                       )
                                       .toList(),
-                              onChanged: (value) {},
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedSalesUnit = value;
+                                });
+                              },
                             ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
                             flex: 1,
                             child: TextFormField(
+                              controller: noOfKgsController,
                               decoration: const InputDecoration(
                                 labelText: "No of KGS",
                                 border: OutlineInputBorder(),
@@ -277,6 +234,7 @@ class _CreateBranchState extends State<products> {
 
                       // Sales Rate
                       TextFormField(
+                        controller: salesRateController,
                         decoration: const InputDecoration(
                           labelText: "Sales Rate",
                           border: OutlineInputBorder(),
@@ -285,8 +243,8 @@ class _CreateBranchState extends State<products> {
                       ),
                       const SizedBox(height: 16),
 
-                      // WholeSale Rate
                       TextFormField(
+                        controller: wholeSaleRateController,
                         decoration: const InputDecoration(
                           labelText: "WholeSale Rate",
                           border: OutlineInputBorder(),
@@ -295,8 +253,8 @@ class _CreateBranchState extends State<products> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Purchase Rate
                       TextFormField(
+                        controller: purchaseRateController,
                         decoration: const InputDecoration(
                           labelText: "Purchase Rate",
                           border: OutlineInputBorder(),
@@ -305,8 +263,8 @@ class _CreateBranchState extends State<products> {
                       ),
                       const SizedBox(height: 16),
 
-                      // MRP
                       TextFormField(
+                        controller: mrpController,
                         decoration: const InputDecoration(
                           labelText: "MRP",
                           border: OutlineInputBorder(),
@@ -315,8 +273,8 @@ class _CreateBranchState extends State<products> {
                       ),
                       const SizedBox(height: 16),
 
-                      // GST %
                       TextFormField(
+                        controller: gstController,
                         decoration: const InputDecoration(
                           labelText: "GST %",
                           border: OutlineInputBorder(),
@@ -331,6 +289,7 @@ class _CreateBranchState extends State<products> {
                           labelText: "GST Type",
                           border: OutlineInputBorder(),
                         ),
+                        value: selectedGstType,
                         items:
                             ["INCLUDE GST", "EXCLUDE GST"]
                                 .map(
@@ -340,7 +299,11 @@ class _CreateBranchState extends State<products> {
                                   ),
                                 )
                                 .toList(),
-                        onChanged: (value) {},
+                        onChanged: (value) {
+                          setState(() {
+                            selectedGstType = value;
+                          });
+                        },
                       ),
                       const SizedBox(height: 16),
 
@@ -357,7 +320,7 @@ class _CreateBranchState extends State<products> {
                               child: ElevatedButton(
                                 onPressed: () {
                                   if (_formKey.currentState!.validate()) {
-                                    // Save action
+                                    _createProduts();
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(
@@ -409,7 +372,12 @@ class _CreateBranchState extends State<products> {
         child: FloatingActionButton(
           backgroundColor: Colors.red,
           shape: const CircleBorder(), // Ensures circular shape
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => CustomerSearchPage()),
+            );
+          },
           child: const Icon(Icons.shopping_cart, size: 30, color: Colors.white),
         ),
       ),

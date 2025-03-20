@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:orderapp/customersearchform.dart';
 import 'package:orderapp/orderconfiramtionpage.dart';
 import 'package:orderapp/widgets/customnavigation.dart';
 
@@ -137,7 +138,12 @@ class _OrderPageState extends State<OrderPage> {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.red,
-        onPressed: () {},
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => CustomerSearchPage()),
+          );
+        },
         child: const Icon(Icons.shopping_cart, color: Colors.white),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,

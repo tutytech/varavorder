@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'package:orderapp/createledger.dart';
+import 'package:orderapp/customersearchform.dart';
 import 'package:orderapp/widgets/customnavigation.dart';
 
 class Ledger extends StatefulWidget {
@@ -376,12 +377,13 @@ class _BranchListPageState extends State<Ledger> {
         child: FloatingActionButton(
           backgroundColor: Colors.red,
           shape: const CircleBorder(), // Ensures circular shape
-          onPressed: () {},
-          child: const Icon(
-            Icons.create_new_folder,
-            size: 30,
-            color: Colors.white,
-          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => CustomerSearchPage()),
+            );
+          },
+          child: const Icon(Icons.shopping_cart, size: 30, color: Colors.white),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,

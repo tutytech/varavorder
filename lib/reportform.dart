@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:orderapp/customersearchform.dart';
 import 'dart:convert';
 
 import 'package:orderapp/widgets/customappbar.dart';
@@ -353,7 +354,12 @@ class _CreateBranchState extends State<Report> {
         child: FloatingActionButton(
           backgroundColor: Colors.red,
           shape: const CircleBorder(), // Ensures circular shape
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => CustomerSearchPage()),
+            );
+          },
           child: const Icon(Icons.shopping_cart, size: 30, color: Colors.white),
         ),
       ),
