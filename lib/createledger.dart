@@ -80,18 +80,18 @@ class _CreateBranchState extends State<CreateLedger> {
     }
   }
 
-  Future<void> _createStaff() async {
+  Future<void> _createledger() async {
     // Check if the form is valid
     if (!(_formKey.currentState?.validate() ?? false)) {
       return; // Exit the method if validation fails
     }
-    final String apiUrl = 'https://chits.tutytech.in/staff.php';
+    final String apiUrl = 'https://varav.tutytech.in/ledgerform.php';
 
     try {
       // Print the request URL and body for debugging
       print('Request URL: $apiUrl');
       print(
-        'Request body: ${{'type': 'insert', 'staffId': _staffIdController.text, 'staffName': _staffNameController.text, 'address': _addressController.text, 'mobileNo': _mobileNoController.text, 'userName': _userNameController.text, 'password': _passwordController.text, 'branch': selectedBranchName, 'branchCode': _branchCodeController.text, 'receiptNo': _receiptNoController.text, 'rights': selectedRights, 'companyid': _companyIdController.text, 'email': _emailController.text}}',
+        'Request body: ${{'type': 'insert', 'customername': _customerNameController.text, 'address': _addressController.text, 'mobileno': _mobileController.text, 'gstin': _gstinController.text}}',
       );
 
       final response = await http.post(
@@ -99,18 +99,10 @@ class _CreateBranchState extends State<CreateLedger> {
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
           'type': 'insert',
-          'staffId': _staffIdController.text,
-          'staffName': _staffNameController.text,
+          'customername': _customerNameController.text,
           'address': _addressController.text,
-          'mobileNo': _mobileNoController.text,
-          'userName': _userNameController.text,
-          'password': _passwordController.text,
-          'branch': selectedBranchName,
-          'branchCode': _branchCodeController.text,
-          'receiptNo': _receiptNoController.text,
-          'rights': selectedRights,
-          'companyid': _companyIdController.text,
-          'email': _emailController.text,
+          'mobileno': _mobileController.text,
+          'gstin': _gstinController.text,
         },
       );
 
@@ -121,28 +113,9 @@ class _CreateBranchState extends State<CreateLedger> {
         final responseData = json.decode(response.body);
 
         // Check if responseData contains staffId
-        if (responseData is List && responseData.isNotEmpty) {
-          _staffId =
-              responseData[0]['id']; // Assuming 'id' is the field for staffId
-          if (_staffId != null) {
-            print('Extracted staffId: $_staffId'); // Debugging
-            _showSnackBar('Staff created successfully! ID: $_staffId');
-            // Navigator.push(
-            //   context,
-            //   MaterialPageRoute(
-            //     builder: (context) =>
-            //         CreateCustomer(staffId: staffId), // Pass staffId
-            //   ),
-            // );
-          } else {
-            _showSnackBar('Error: Staff ID is null.');
-          }
-        } else {
-          _showSnackBar('Error: Invalid response format.');
-        }
       } else {
         _showSnackBar(
-          'Failed to create staff. Status code: ${response.statusCode}',
+          'Failed to create ledger. Status code: ${response.statusCode}',
         );
       }
     } catch (e) {
@@ -241,7 +214,7 @@ class _CreateBranchState extends State<CreateLedger> {
                               child: ElevatedButton(
                                 onPressed: () {
                                   if (_formKey.currentState!.validate()) {
-                                    // Save action
+                                    _createledger();
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(

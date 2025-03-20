@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:orderapp/orderconfiramtionpage.dart';
+import 'package:orderapp/widgets/customnavigation.dart';
 
 class OrderPage extends StatefulWidget {
   final String name;
@@ -105,7 +107,18 @@ class _OrderPageState extends State<OrderPage> {
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => OrderConfirmation(
+                                  name: widget.name,
+                                  phoneNo: widget.phoneNo,
+                                ),
+                          ),
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
                         minimumSize: const Size(double.infinity, 50),
@@ -122,6 +135,13 @@ class _OrderPageState extends State<OrderPage> {
           ),
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.red,
+        onPressed: () {},
+        child: const Icon(Icons.shopping_cart, color: Colors.white),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: CustomBottomNavBar(onItemSelected: (int) {}),
     );
   }
 

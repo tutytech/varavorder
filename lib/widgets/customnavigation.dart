@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:orderapp/homepage.dart';
+import 'package:orderapp/ledgerform.dart';
+import 'package:orderapp/products.dart';
+import 'package:orderapp/reportform.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final Function(int) onItemSelected;
@@ -20,23 +24,47 @@ class CustomBottomNavBar extends StatelessWidget {
             IconButton(
               iconSize: 32,
               icon: const Icon(Icons.home, color: Colors.white),
-              onPressed: () => onItemSelected(0),
+              onPressed:
+                  () => {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => FoodGoHome()),
+                    ),
+                  },
             ),
             IconButton(
               iconSize: 32,
               icon: const Icon(Icons.inventory, color: Colors.white),
-              onPressed: () => onItemSelected(1),
+              onPressed:
+                  () => {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => products()),
+                    ),
+                  },
             ),
             const SizedBox(width: 40), // Space for floating button
             IconButton(
               iconSize: 32,
               icon: const Icon(Icons.group, color: Colors.white),
-              onPressed: () => onItemSelected(2),
+              onPressed:
+                  () => {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => Ledger()),
+                    ),
+                  },
             ),
             IconButton(
               iconSize: 32,
               icon: const Icon(Icons.dns, color: Colors.white),
-              onPressed: () => onItemSelected(3),
+              onPressed:
+                  () => {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => Report()),
+                    ),
+                  },
             ),
           ],
         ),

@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'package:orderapp/createledger.dart';
+import 'package:orderapp/widgets/customnavigation.dart';
 
 class Ledger extends StatefulWidget {
   final String? rights;
@@ -24,7 +25,7 @@ class _BranchListPageState extends State<Ledger> {
   @override
   void initState() {
     super.initState();
-    _branchListFuture = fetchCustomers();
+    _branchListFuture = fetchLedgers();
     _searchController.addListener(() {
       _filterBranches(_searchController.text);
     });
@@ -36,18 +37,21 @@ class _BranchListPageState extends State<Ledger> {
     super.dispose();
   }
 
-  Future<List<Map<String, dynamic>>> fetchCustomers() async {
-    const String _baseUrl = 'https://chits.tutytech.in/customer.php';
-    final Map<String, String> body = {'type': 'fetch'};
+  Future<List<Map<String, dynamic>>> fetchLedgers() async {
+    const String _baseUrl = 'https://varav.tutytech.in/ledgerform.php';
+
+    final Map<String, String> requestBody = {'type': 'select'};
 
     try {
       print('Request URL: $_baseUrl');
-      print('Request Body: $body');
+      print('Request Body: $requestBody');
 
       final response = await http.post(
         Uri.parse(_baseUrl),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: body,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }, // Correct content type
+        body: requestBody, // Send data as form-encoded, NOT JSON
       );
 
       print('Response Status Code: ${response.statusCode}');
@@ -56,48 +60,14 @@ class _BranchListPageState extends State<Ledger> {
       if (response.statusCode == 200) {
         final decodedResponse = json.decode(response.body);
 
-        if (decodedResponse['success'] == true &&
-            decodedResponse['customerDetails'] is List) {
-          return List<Map<String, dynamic>>.from(
-            decodedResponse['customerDetails'].map((customer) {
-              return {
-                'id': customer['Id'] ?? '',
-                'customerId': customer['customerId'] ?? 'Unknown customer',
-                'name': customer['customername']?.toString() ?? 'N/A',
-                'address': customer['Address'] ?? 'N/A',
-                'phoneNo': customer['PhoneNo'] ?? 'N/A',
-                'aadharNo': customer['aadharNo'] ?? 'N/A',
-                'collectionstaff': customer['collectionstaff'] ?? 'N/A',
-                'branch': customer['branch'] ?? 'N/A',
-                'center': customer['center'] ?? 'N/A',
-                'latitude': customer['latitude'] ?? 'N/A',
-                'longitude': customer['longitude'] ?? 'N/A',
-                'uploadAadhar': customer['uploadAadhar'] ?? '',
-                'uploadvoterId': customer['uploadvoterId'] ?? '',
-                'uploadPan': customer['uploadPan'] ?? '',
-                'uploadNomineeAadharCard':
-                    customer['uploadNomineeAadharCard'] ?? '',
-                'uploadNomineeVoterId': customer['uploadNomineeVoterId'] ?? '',
-                'uploadNomineePan': customer['uploadNomineePan'] ?? '',
-                'uploadRationCard': customer['uploadRationCard'] ?? '',
-                'uploadbondsheet': customer['uploadbondsheet'] ?? '',
-                'uploadChequeLeaf': customer['uploadChequeLeaf'] ?? '',
-                'uploadGasBill': customer['uploadGasBill'] ?? '',
-                'uploadEbBill': customer['uploadEbBill'] ?? '',
-                'uploadPropertyTaxReceipt':
-                    customer['uploadPropertyTaxReceipt'] ?? '',
-                'customerPhoto': customer['customerPhoto'] ?? '',
-              };
-            }),
-          );
-        } else if (decodedResponse['error'] != null) {
-          throw Exception('API Error: ${decodedResponse['error']}');
+        if (decodedResponse is List) {
+          return List<Map<String, dynamic>>.from(decodedResponse);
         } else {
           throw Exception('Unexpected response format');
         }
       } else {
         throw Exception(
-          'Failed to fetch customers (HTTP ${response.statusCode})',
+          'Failed to fetch ledgers (HTTP ${response.statusCode})',
         );
       }
     } catch (e) {
@@ -326,18 +296,18 @@ class _BranchListPageState extends State<Ledger> {
                                   _filteredBranches.map((branch) {
                                     return DataRow(
                                       cells: [
+                                        DataCell(Text(branch['id'] ?? 'N/A')),
                                         DataCell(
-                                          Text(branch['customerId'] ?? 'N/A'),
+                                          Text(branch['customername'] ?? '0'),
                                         ),
-                                        DataCell(Text(branch['name'] ?? '0')),
                                         DataCell(
                                           Text(branch['address'] ?? 'N/A'),
                                         ),
                                         DataCell(
-                                          Text(branch['phoneNo'] ?? 'N/A'),
+                                          Text(branch['mobileno'] ?? 'N/A'),
                                         ),
                                         DataCell(
-                                          Text(branch['aadharNo'] ?? 'N/A'),
+                                          Text(branch['gstin'] ?? 'N/A'),
                                         ),
 
                                         DataCell(
@@ -396,6 +366,26 @@ class _BranchListPageState extends State<Ledger> {
           ),
         ],
       ),
+      floatingActionButton: Container(
+        width: 60, // Ensures the button is a perfect circle
+        height: 60,
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.red,
+        ),
+        child: FloatingActionButton(
+          backgroundColor: Colors.red,
+          shape: const CircleBorder(), // Ensures circular shape
+          onPressed: () {},
+          child: const Icon(
+            Icons.create_new_folder,
+            size: 30,
+            color: Colors.white,
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: CustomBottomNavBar(onItemSelected: (int) {}),
     );
   }
 }

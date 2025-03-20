@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 class CompanyCreationScreen extends StatefulWidget {
   const CompanyCreationScreen({Key? key}) : super(key: key);
@@ -8,18 +12,106 @@ class CompanyCreationScreen extends StatefulWidget {
 }
 
 class _CreateAccountScreenState extends State<CompanyCreationScreen> {
-  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
+  final TextEditingController _companyNameController = TextEditingController();
+  final TextEditingController _gstinController = TextEditingController();
+  final TextEditingController _phoneNumberController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   void _createAccount() {
     print('Creating account...');
-    print('Name: ${_nameController.text}');
+
     print('Email: ${_emailController.text}');
+  }
+
+  Future<void> _saveCompanyData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      final String companyName = _companyNameController.text.trim();
+      final String address = _addressController.text.trim();
+      final String email = _emailController.text.trim();
+      final String phoneNumber = _phoneNumberController.text.trim();
+
+      final uri = Uri.parse('https://varav.tutytech.in/company.php');
+      final requestBody = {
+        'type': 'insert',
+        'companyname': companyName,
+        'address': address,
+        'phoneno': phoneNumber,
+        'email': email,
+      };
+
+      print('Request URL: $uri');
+      print('Request Body: ${jsonEncode(requestBody)}');
+
+      final response = await http.post(
+        uri,
+        body: requestBody,
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      );
+
+      print('Response Status Code: ${response.statusCode}');
+      print('Response Headers: ${response.headers}');
+      print('Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        try {
+          // Decode as a List since API returns an array
+          final List<dynamic> responseData = jsonDecode(response.body);
+
+          print("Parsed Response: $responseData");
+
+          // Ensure the response contains at least one item
+          if (responseData.isNotEmpty &&
+              responseData[0] is Map<String, dynamic>) {
+            final Map<String, dynamic> companyData = responseData[0];
+
+            if (companyData.containsKey('id') && companyData['id'] != null) {
+              final int companyId = companyData['id'];
+
+              await prefs.setString('companyname', companyName);
+              await prefs.setString('address', address);
+              await prefs.setString('mailid', email);
+              await prefs.setString('phoneno', phoneNumber);
+              await prefs.setString('companyId', companyId.toString());
+
+              print('Company created successfully: ID - $companyId');
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Company created successfully!')),
+              );
+            } else {
+              print('Unexpected Response Format: $companyData');
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Unexpected response format.')),
+              );
+            }
+          } else {
+            print('Unexpected Response Format: $responseData');
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Unexpected response format.')),
+            );
+          }
+        } catch (jsonError) {
+          print('JSON Parsing Error: $jsonError');
+          print('Raw Response: ${response.body}');
+        }
+      } else {
+        print('Request Failed. Status: ${response.statusCode}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to create company.')),
+        );
+      }
+    } catch (e) {
+      print('Error: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('An error occurred: $e')));
+    }
   }
 
   @override
@@ -62,14 +154,14 @@ class _CreateAccountScreenState extends State<CompanyCreationScreen> {
                     children: [
                       _buildTextField(
                         'Company Name',
-                        _nameController,
+                        _companyNameController,
                         Icons.person,
                         false,
                       ),
                       const SizedBox(height: 15),
                       _buildTextField(
                         'Address',
-                        _nameController,
+                        _addressController,
                         Icons.person,
                         false,
                       ),
@@ -83,7 +175,7 @@ class _CreateAccountScreenState extends State<CompanyCreationScreen> {
                       const SizedBox(height: 15),
                       _buildTextField(
                         'PhoneNo',
-                        _emailController,
+                        _phoneNumberController,
                         Icons.email,
                         false,
                       ),
@@ -92,7 +184,10 @@ class _CreateAccountScreenState extends State<CompanyCreationScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _createAccount,
+                          onPressed: () {
+                            _saveCompanyData();
+                          },
+
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red,
                             padding: const EdgeInsets.symmetric(vertical: 15),
