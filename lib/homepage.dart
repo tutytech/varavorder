@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:orderapp/customersearchform.dart';
+import 'package:orderapp/widgets/customnavigation.dart';
 
 class FoodGoHome extends StatelessWidget {
   const FoodGoHome({Key? key}) : super(key: key);
@@ -58,48 +60,17 @@ class FoodGoHome extends StatelessWidget {
         child: FloatingActionButton(
           backgroundColor: Colors.red,
           shape: const CircleBorder(), // Ensures circular shape
-          onPressed: () {},
-          child: const Icon(Icons.add, size: 30, color: Colors.white),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => CustomerSearchPage()),
+            );
+          },
+          child: const Icon(Icons.shopping_cart, size: 30, color: Colors.white),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-
-      // Curved Bottom Navigation Bar
-      bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8,
-        color: Colors.red,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                iconSize: 32, // Increase icon size
-                icon: const Icon(Icons.home, color: Colors.white),
-                onPressed: () {},
-              ),
-
-              IconButton(
-                iconSize: 32,
-                icon: const Icon(Icons.search, color: Colors.white),
-                onPressed: () {},
-              ),
-              const SizedBox(width: 40), // Space for the floating action button
-              IconButton(
-                iconSize: 32,
-                icon: const Icon(Icons.shopping_cart, color: Colors.white),
-                onPressed: () {},
-              ),
-              IconButton(
-                iconSize: 32,
-                icon: const Icon(Icons.person, color: Colors.white),
-                onPressed: () {},
-              ),
-            ],
-          ),
-        ),
-      ),
+      bottomNavigationBar: CustomBottomNavBar(onItemSelected: (int) {}),
     );
   }
 

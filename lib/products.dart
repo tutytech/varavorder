@@ -5,6 +5,7 @@ import 'dart:convert';
 
 import 'package:orderapp/widgets/customappbar.dart';
 import 'package:orderapp/widgets/customnavigation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class products extends StatefulWidget {
   final String? rights;
@@ -45,6 +46,9 @@ class _CreateBranchState extends State<products> {
   // }
 
   Future<void> _createProduts() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? userId = prefs.getString('userId');
+    final String? companyId = prefs.getString('companyId');
     // Check if the form is valid
 
     final String apiUrl = 'https://varav.tutytech.in/product.php';
@@ -64,15 +68,17 @@ class _CreateBranchState extends State<products> {
           'productcode': productCodeController.text,
           'productname': productNameController.text,
           'purchaseunit': selectedPurchaseUnit,
-          'qty': qtyController.text,
+          'purchaseqty': qtyController.text,
           'salesunit': selectedSalesUnit,
-          'kg': noOfKgsController.text,
+          'salesqty': noOfKgsController.text,
           'salesrate': salesRateController.text,
           'wholesalerate': wholeSaleRateController.text,
           'purchaserate': purchaseRateController.text,
           'mrp': mrpController.text,
           'gst': gstController.text,
           'gsttype': selectedGstType,
+          'entryid': userId,
+          'companyid': companyId,
         },
       );
 

@@ -5,6 +5,7 @@ import 'dart:convert';
 
 import 'package:orderapp/widgets/customappbar.dart';
 import 'package:orderapp/widgets/customnavigation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CreateLedger extends StatefulWidget {
   final String? rights;
@@ -82,6 +83,9 @@ class _CreateBranchState extends State<CreateLedger> {
   }
 
   Future<void> _createledger() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? userId = prefs.getString('userId');
+    final String? companyId = prefs.getString('companyId');
     // Check if the form is valid
     if (!(_formKey.currentState?.validate() ?? false)) {
       return; // Exit the method if validation fails
@@ -104,6 +108,8 @@ class _CreateBranchState extends State<CreateLedger> {
           'address': _addressController.text,
           'mobileno': _mobileController.text,
           'gstin': _gstinController.text,
+          'entryid': userId,
+          'companyid': companyId,
         },
       );
 

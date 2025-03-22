@@ -1,7 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'dart:async';
-
+import 'package:http/http.dart' as http;
 import 'package:orderapp/createaccount.dart';
+import 'package:orderapp/homepage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -172,17 +176,75 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
-  void _login() {
-    final username = _emailController.text;
-    final password = _passwordController.text;
-    if (username == 'admin' && password == 'password') {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomePage()),
+  Future<void> _login() async {
+    final String email = _emailController.text.trim();
+    final String password = _passwordController.text.trim();
+
+    final String url = "https://varav.tutytech.in/user.php";
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        body: {
+          "type": "login", // Add this if your API needs it
+          "username": email,
+          "password": password,
+        },
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
       );
-    } else {
+
+      print('Login Response Status Code: ${response.statusCode}');
+      print(
+        'Login Response Body: ${response.body.isEmpty ? "EMPTY RESPONSE" : response.body}',
+      );
+
+      if (response.statusCode == 200) {
+        if (response.body.isEmpty) {
+          print("Error: API returned an empty response.");
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Login failed. Server returned an empty response."),
+            ),
+          );
+          return;
+        }
+
+        final List<dynamic> responseData = jsonDecode(response.body);
+
+        if (responseData.isNotEmpty &&
+            responseData[0] is Map<String, dynamic> &&
+            responseData[0].containsKey("id")) {
+          String userId = responseData[0]["id"].toString();
+
+          // Save user ID to SharedPreferences
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString("userId", userId);
+          print("User ID saved to SharedPreferences: $userId");
+
+          // Navigate to the home screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => FoodGoHome()),
+          );
+          print('Login Successfully');
+        } else {
+          print("User ID not found in response.");
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Login failed. Invalid response format."),
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Login failed. Please try again.")),
+        );
+      }
+    } catch (e) {
+      print('Login Error: $e');
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Invalid credentials')));
+      ).showSnackBar(SnackBar(content: Text("An error occurred: $e")));
     }
   }
 
@@ -323,7 +385,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      onPressed: () {},
+                      onPressed: () {
+                        _login();
+                      },
                       child: const Text(
                         'Login',
                         style: TextStyle(fontSize: 18, color: Colors.white),

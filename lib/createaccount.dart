@@ -1,5 +1,8 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:orderapp/companycreation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CreateAccountScreen extends StatefulWidget {
   const CreateAccountScreen({Key? key}) : super(key: key);
@@ -12,15 +15,85 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
+  final TextEditingController _phonenoController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
-  void _createAccount() {
-    print('Creating account...');
-    print('Name: ${_nameController.text}');
-    print('Email: ${_emailController.text}');
+  Future<void> _createAccount() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? companyId = prefs.getString('companyId');
+
+      if (companyId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Company ID not found. Please create a company first.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      final Uri userUri = Uri.parse('https://varav.tutytech.in/user.php');
+      final Map<String, String> userRequestBody = {
+        'type': 'insert',
+        'name': _nameController.text.trim(),
+        'phoneno': _phonenoController.text.trim(),
+        'email': _emailController.text.trim(),
+        'username': _usernameController.text.trim(),
+        'password': _passwordController.text.trim(),
+        'companyid': companyId,
+      };
+
+      print('User Request URL: $userUri');
+      print('User Request Body: ${jsonEncode(userRequestBody)}');
+
+      final http.Response userResponse = await http.post(
+        userUri,
+        body: userRequestBody,
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      );
+
+      print('User Response Status Code: ${userResponse.statusCode}');
+      print('User Response Body: ${userResponse.body}');
+
+      if (userResponse.statusCode == 200) {
+        final List<dynamic> responseData = jsonDecode(userResponse.body);
+
+        if (responseData.isNotEmpty &&
+            responseData[0] is Map<String, dynamic> &&
+            responseData[0].containsKey("id")) {
+          String userId = responseData[0]["id"].toString();
+
+          // Save user ID to SharedPreferences
+          await prefs.setString("userId", userId);
+          print("User ID saved to SharedPreferences: $userId");
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('User registered successfully!')),
+          );
+
+          // Optionally navigate to another page after success
+          Navigator.pop(context);
+        } else {
+          print("User ID not found in response.");
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to get User ID.')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to register user.')),
+        );
+      }
+    } catch (e) {
+      print('User Registration Error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred while registering user: $e')),
+      );
+    }
   }
 
   @override
@@ -70,7 +143,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                       const SizedBox(height: 15),
                       _buildTextField(
                         'PhoneNo.',
-                        _nameController,
+                        _phonenoController,
                         Icons.person,
                         false,
                       ),
@@ -84,7 +157,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                       const SizedBox(height: 15),
                       _buildTextField(
                         'UserName',
-                        _emailController,
+                        _usernameController,
                         Icons.email,
                         false,
                       ),
