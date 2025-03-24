@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:orderapp/customersearchform.dart';
 import 'package:orderapp/orderconfiramtionpage.dart';
 import 'package:orderapp/widgets/customnavigation.dart';
+import 'package:http/http.dart' as http;
 
 class OrderPage extends StatefulWidget {
   final String name;
@@ -20,6 +23,54 @@ class _OrderPageState extends State<OrderPage> {
     "Creamy nachos": 1,
     "Maharaja mac": 1,
   };
+  List<String> productNames = [];
+  List<Map<String, dynamic>> productList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchProducts();
+  }
+
+  Future<void> fetchProducts() async {
+    const String _baseUrl = 'https://varav.tutytech.in/product.php';
+    final Map<String, String> requestBody = {'type': 'select'};
+
+    try {
+      final response = await http.post(
+        Uri.parse(_baseUrl),
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: requestBody,
+      );
+
+      if (response.statusCode == 200) {
+        final decodedResponse = json.decode(response.body);
+
+        if (decodedResponse is List && decodedResponse.isNotEmpty) {
+          setState(() {
+            productList =
+                decodedResponse.map<Map<String, dynamic>>((product) {
+                  return {
+                    'name': product['productname'].toString(),
+                    'price': "€${product['salesrate']}",
+                    'qty':
+                        int.tryParse(product['salesqty'].toString()) ??
+                        0, // Ensure qty is an integer
+                  };
+                }).toList();
+          });
+        } else {
+          throw Exception('Unexpected response format');
+        }
+      } else {
+        throw Exception(
+          'Failed to fetch products (HTTP ${response.statusCode})',
+        );
+      }
+    } catch (e) {
+      print('Error occurred: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,8 +98,18 @@ class _OrderPageState extends State<OrderPage> {
               const SizedBox(height: 10),
 
               // Product Items
-              productItem("Creamy nachos", "€15.20"),
-              productItem("Maharaja mac", "€11.10"),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children:
+                    productList.map((product) {
+                      return productItem(
+                        product['name'] as String,
+                        product['price'] as String,
+                        product['qty'] as int, // Pass qty here
+                      );
+                    }).toList(),
+              ),
+
               const SizedBox(height: 20),
 
               // Bill Details
@@ -136,22 +197,31 @@ class _OrderPageState extends State<OrderPage> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.red,
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => CustomerSearchPage()),
-          );
-        },
-        child: const Icon(Icons.shopping_cart, color: Colors.white),
+      floatingActionButton: Container(
+        width: 60, // Ensures the button is a perfect circle
+        height: 60,
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.red,
+        ),
+        child: FloatingActionButton(
+          backgroundColor: Colors.red,
+          shape: const CircleBorder(), // Ensures circular shape
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => CustomerSearchPage()),
+            );
+          },
+          child: const Icon(Icons.shopping_cart, size: 30, color: Colors.white),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: CustomBottomNavBar(onItemSelected: (int) {}),
     );
   }
 
-  Widget productItem(String name, String price) {
+  Widget productItem(String name, String price, int qty) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       margin: const EdgeInsets.only(bottom: 10),
@@ -182,8 +252,8 @@ class _OrderPageState extends State<OrderPage> {
               IconButton(
                 onPressed: () {
                   setState(() {
-                    if (_productQuantities[name]! > 1) {
-                      _productQuantities[name] = _productQuantities[name]! - 1;
+                    if (qty > 1) {
+                      qty = qty - 1; // Decrease quantity
                     }
                   });
                 },
@@ -201,7 +271,7 @@ class _OrderPageState extends State<OrderPage> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  "${_productQuantities[name]}",
+                  "$qty", // Display API quantity instead of `_productQuantities[name]`
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -213,7 +283,7 @@ class _OrderPageState extends State<OrderPage> {
               IconButton(
                 onPressed: () {
                   setState(() {
-                    _productQuantities[name] = _productQuantities[name]! + 1;
+                    qty = qty + 1; // Increase quantity
                   });
                 },
                 icon: const Icon(Icons.add, color: Colors.red),

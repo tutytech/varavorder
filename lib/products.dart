@@ -62,6 +62,7 @@ class _CreateBranchState extends State<products> {
 
       final response = await http.post(
         Uri.parse(apiUrl),
+
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
           'type': 'insert',

@@ -93,28 +93,14 @@ class _CustomerSearchPageState extends State<CustomerSearchPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+            TextField(
+              controller: searchController,
+              decoration: const InputDecoration(
+                labelText: 'Search by Name, Phone No, or GSTIN',
+                border: InputBorder.none,
+                prefixIcon: Icon(Icons.search, color: Colors.black),
               ),
-              padding: const EdgeInsets.all(8.0),
-              child: TextField(
-                controller: searchController,
-                decoration: const InputDecoration(
-                  labelText: 'Search by Name, Phone No, or GSTIN',
-                  border: InputBorder.none,
-                  prefixIcon: Icon(Icons.search, color: Colors.black),
-                ),
-                onChanged: filterSearch,
-              ),
+              onChanged: filterSearch,
             ),
             const SizedBox(height: 20),
             Expanded(
@@ -145,8 +131,8 @@ class _CustomerSearchPageState extends State<CustomerSearchPage> {
                             trailing: ElevatedButton(
                               onPressed: () {
                                 navigateToOrderPage(
-                                  customer['customerName'] ?? '',
-                                  customer['phoneNo'] ?? '',
+                                  customer['customername'] ?? '',
+                                  customer['mobileno'] ?? '',
                                 );
                               },
                               style: ElevatedButton.styleFrom(
@@ -164,15 +150,24 @@ class _CustomerSearchPageState extends State<CustomerSearchPage> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.red,
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => CustomerSearchPage()),
-          );
-        },
-        child: const Icon(Icons.shopping_cart, color: Colors.white),
+      floatingActionButton: Container(
+        width: 60, // Ensures the button is a perfect circle
+        height: 60,
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.red,
+        ),
+        child: FloatingActionButton(
+          backgroundColor: Colors.red,
+          shape: const CircleBorder(), // Ensures circular shape
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => CustomerSearchPage()),
+            );
+          },
+          child: const Icon(Icons.shopping_cart, size: 30, color: Colors.white),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: CustomBottomNavBar(onItemSelected: (int) {}),
