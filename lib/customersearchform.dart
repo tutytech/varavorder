@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:orderapp/orderpage.dart';
 import 'package:orderapp/widgets/customnavigation.dart';
 
@@ -9,33 +11,58 @@ class CustomerSearchPage extends StatefulWidget {
 
 class _CustomerSearchPageState extends State<CustomerSearchPage> {
   final TextEditingController searchController = TextEditingController();
-  List<Map<String, String>> customers = [
-    {"customerName": "John Doe", "phoneNo": "9876543210", "gst": "GST001"},
-    {"customerName": "Jane Smith", "phoneNo": "9988776655", "gst": "GST002"},
-    {"customerName": "Mike Johnson", "phoneNo": "9123456789", "gst": "GST003"},
-  ];
-  List<Map<String, String>> filteredCustomers = [];
+  List<Map<String, dynamic>> customers = [];
+  List<Map<String, dynamic>> filteredCustomers = [];
 
   @override
   void initState() {
     super.initState();
-    filteredCustomers = []; // Initially, do not show any customers
+    fetchLedgers();
+  }
+
+  Future<void> fetchLedgers() async {
+    const String _baseUrl = 'https://varav.tutytech.in/ledgerform.php';
+    final Map<String, String> requestBody = {'type': 'select'};
+
+    try {
+      final response = await http.post(
+        Uri.parse(_baseUrl),
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: requestBody,
+      );
+
+      if (response.statusCode == 200) {
+        final decodedResponse = json.decode(response.body);
+        if (decodedResponse is List) {
+          setState(() {
+            customers = List<Map<String, dynamic>>.from(decodedResponse);
+            filteredCustomers = customers;
+          });
+        } else {
+          throw Exception('Unexpected response format');
+        }
+      } else {
+        throw Exception('Failed to fetch data');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
   }
 
   void filterSearch(String query) {
     setState(() {
       if (query.isEmpty) {
-        filteredCustomers = [];
+        filteredCustomers = customers;
       } else {
         filteredCustomers =
             customers
                 .where(
                   (customer) =>
-                      customer["customerName"]!.toLowerCase().contains(
+                      (customer['customername'] ?? '').toLowerCase().contains(
                         query.toLowerCase(),
                       ) ||
-                      customer["phoneNo"]!.contains(query) ||
-                      customer["gst"]!.toLowerCase().contains(
+                      (customer['mobileno'] ?? '').contains(query) ||
+                      (customer['gstin'] ?? '').toLowerCase().contains(
                         query.toLowerCase(),
                       ),
                 )
@@ -57,95 +84,86 @@ class _CustomerSearchPageState extends State<CustomerSearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Center(
-          child: const Text(
-            "Search Customer",
-            style: TextStyle(color: Colors.white),
-          ),
+        title: const Center(
+          child: Text("Search Customer", style: TextStyle(color: Colors.white)),
         ),
         backgroundColor: Colors.red,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8.0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  controller: searchController,
-                  decoration: const InputDecoration(
-                    labelText: 'Search by Name, Phone No, or GST',
-                    border: InputBorder.none,
-                    prefixIcon: Icon(Icons.search, color: Colors.black),
+        child: Column(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
                   ),
-                  onChanged: filterSearch,
-                ),
+                ],
               ),
-              const SizedBox(height: 20),
-              filteredCustomers.isEmpty
-                  ? const Center(
-                    child: Text(
-                      "Search for a customer",
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
-                  )
-                  : ListView.builder(
-                    shrinkWrap:
-                        true, // Important to avoid infinite height issue
-                    itemCount: filteredCustomers.length,
-                    itemBuilder: (context, index) {
-                      final customer = filteredCustomers[index];
-                      return ListTile(
-                        title: Text(customer["customerName"]!),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("Phone: ${customer["phoneNo"]}"),
-                            Text(
-                              "GST: ${customer["gst"]}",
-                              style: TextStyle(color: Colors.grey),
+              padding: const EdgeInsets.all(8.0),
+              child: TextField(
+                controller: searchController,
+                decoration: const InputDecoration(
+                  labelText: 'Search by Name, Phone No, or GSTIN',
+                  border: InputBorder.none,
+                  prefixIcon: Icon(Icons.search, color: Colors.black),
+                ),
+                onChanged: filterSearch,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child:
+                  filteredCustomers.isEmpty
+                      ? const Center(
+                        child: Text(
+                          "No customers found",
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                      )
+                      : ListView.builder(
+                        itemCount: filteredCustomers.length,
+                        itemBuilder: (context, index) {
+                          final customer = filteredCustomers[index];
+                          return ListTile(
+                            title: Text(customer['customername'] ?? 'Unknown'),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Phone: ${customer['mobileno'] ?? 'N/A'}"),
+                                Text(
+                                  "GSTIN: ${customer['gstin'] ?? 'N/A'}",
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        trailing: ElevatedButton(
-                          onPressed: () {
-                            navigateToOrderPage(
-                              customer["customerName"]!,
-                              customer["phoneNo"]!,
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                          ),
-                          child: const Text(
-                            "Select",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-
-              const SizedBox(height: 20),
-
-              // Product Details (Static)
-            ],
-          ),
+                            trailing: ElevatedButton(
+                              onPressed: () {
+                                navigateToOrderPage(
+                                  customer['customerName'] ?? '',
+                                  customer['phoneNo'] ?? '',
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                              ),
+                              child: const Text(
+                                "Select",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+            ),
+          ],
         ),
       ),
-
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.red,
         onPressed: () {
@@ -160,107 +178,107 @@ class _CustomerSearchPageState extends State<CustomerSearchPage> {
       bottomNavigationBar: CustomBottomNavBar(onItemSelected: (int) {}),
     );
   }
+}
 
-  Widget productItem(String name, String quantity, String price) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Text("Regular", style: TextStyle(color: Colors.grey)),
-              const Text("Customize", style: TextStyle(color: Colors.red)),
-            ],
+// Widget productItem(String name, String quantity, String price) {
+//   return Container(
+//     padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+//     decoration: BoxDecoration(
+//       borderRadius: BorderRadius.circular(8),
+//       border: Border.all(color: Colors.grey.shade300),
+//     ),
+//     child: Row(
+//       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//       children: [
+//         Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             Text(
+//               name,
+//               style: const TextStyle(
+//                 fontSize: 16,
+//                 fontWeight: FontWeight.bold,
+//               ),
+//             ),
+//             const Text("Regular", style: TextStyle(color: Colors.grey)),
+//             const Text("Customize", style: TextStyle(color: Colors.red)),
+//           ],
+//         ),
+//         Row(
+//           children: [
+//             // Minus Button
+//             IconButton(
+//               onPressed: () {
+//                 // Ensure quantity doesn't go below 1
+//                 int currentQuantity = int.parse(quantity);
+//                 if (currentQuantity > 1) {
+//                   setState(() {
+//                     quantity = (currentQuantity - 1).toString();
+//                   });
+//                 }
+//               },
+//               icon: const Icon(Icons.remove, color: Colors.red),
+//             ),
+
+//             // Quantity Box
+//             Container(
+//               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+//               decoration: BoxDecoration(
+//                 border: Border.all(color: Colors.red),
+//                 borderRadius: BorderRadius.circular(4),
+//               ),
+//               child: Text(
+//                 quantity,
+//                 style: const TextStyle(
+//                   fontSize: 16,
+//                   fontWeight: FontWeight.bold,
+//                 ),
+//               ),
+//             ),
+
+//             // Plus Button
+//             IconButton(
+//               onPressed: () {
+//                 int currentQuantity = int.parse(quantity);
+//                 setState(() {
+//                   quantity = (currentQuantity + 1).toString();
+//                 });
+//               },
+//               icon: const Icon(Icons.add, color: Colors.red),
+//             ),
+
+//             const SizedBox(width: 10),
+
+//             // Price Display
+//             Text(price, style: const TextStyle(fontSize: 16)),
+//           ],
+//         ),
+//       ],
+//     ),
+//   );
+// }
+
+Widget billDetailRow(String title, String amount, {bool isBold = false}) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
           ),
-          Row(
-            children: [
-              // Minus Button
-              IconButton(
-                onPressed: () {
-                  // Ensure quantity doesn't go below 1
-                  int currentQuantity = int.parse(quantity);
-                  if (currentQuantity > 1) {
-                    setState(() {
-                      quantity = (currentQuantity - 1).toString();
-                    });
-                  }
-                },
-                icon: const Icon(Icons.remove, color: Colors.red),
-              ),
-
-              // Quantity Box
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.red),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  quantity,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-
-              // Plus Button
-              IconButton(
-                onPressed: () {
-                  int currentQuantity = int.parse(quantity);
-                  setState(() {
-                    quantity = (currentQuantity + 1).toString();
-                  });
-                },
-                icon: const Icon(Icons.add, color: Colors.red),
-              ),
-
-              const SizedBox(width: 10),
-
-              // Price Display
-              Text(price, style: const TextStyle(fontSize: 16)),
-            ],
+        ),
+        Text(
+          amount,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget billDetailRow(String title, String amount, {bool isBold = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-          Text(
-            amount,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
 }
