@@ -25,11 +25,15 @@ class _OrderPageState extends State<OrderPage> {
   };
   List<String> productNames = [];
   List<Map<String, dynamic>> productList = [];
+  double gstPer = 5.0;
+  int quantity = 0; // Default quantity starts from 0
+  final TextEditingController _controller = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     fetchProducts();
+    _controller.text = quantity.toString();
   }
 
   Future<void> fetchProducts() async {
@@ -53,6 +57,9 @@ class _OrderPageState extends State<OrderPage> {
                   return {
                     'name': product['productname'].toString(),
                     'price': "€${product['salesrate']}",
+                    'purchaseprice': "€${product['purchaserate']}",
+                    'mrp': "€${product['mrp']}",
+                    'salesunit': "€${product['salesunit']}",
                     'qty':
                         int.tryParse(product['salesqty'].toString()) ??
                         0, // Ensure qty is an integer
@@ -70,6 +77,24 @@ class _OrderPageState extends State<OrderPage> {
     } catch (e) {
       print('Error occurred: $e');
     }
+  }
+
+  void _updateQty(int newQty, {bool fromTextField = false}) {
+    setState(() {
+      quantity = newQty < 0 ? 0 : newQty; // Ensure qty doesn't go below 0
+      if (!fromTextField) {
+        _controller.text =
+            quantity.toString(); // Update only when not from TextField
+      }
+    });
+  }
+
+  double getNumericPrice(String price) {
+    return double.parse(price.replaceAll(RegExp(r'[^\d.]'), ''));
+  }
+
+  double calculateSRate(double price) {
+    return (price * 100) / (100 + gstPer);
   }
 
   @override
@@ -105,7 +130,7 @@ class _OrderPageState extends State<OrderPage> {
                       return productItem(
                         product['name'] as String,
                         product['price'] as String,
-                        product['qty'] as int, // Pass qty here
+                        quantity, // Always send 0 initially
                       );
                     }).toList(),
               ),
@@ -222,6 +247,22 @@ class _OrderPageState extends State<OrderPage> {
   }
 
   Widget productItem(String name, String price, int qty) {
+    double numericPrice = getNumericPrice(price);
+    double totalPrice = numericPrice * qty;
+
+    // Calculate 5% SGST, 5% CGST, 5% TGST
+    double sgst = totalPrice * 0.05;
+    double cgst = totalPrice * 0.05;
+    double tgst = totalPrice * 0.05;
+
+    // Total Tax (15% of total price)
+    double totalTax = sgst + cgst + tgst;
+
+    // Final amount after adding tax
+    double finalAmount = totalPrice + totalTax;
+
+    double calculatedSRate = qty > 0 ? calculateSRate(totalPrice) : 0.0;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       margin: const EdgeInsets.only(bottom: 10),
@@ -250,49 +291,67 @@ class _OrderPageState extends State<OrderPage> {
             children: [
               // Minus Button
               IconButton(
-                onPressed: () {
-                  setState(() {
-                    if (qty > 1) {
-                      qty = qty - 1; // Decrease quantity
-                    }
-                  });
-                },
+                onPressed: () => _updateQty(qty - 1),
                 icon: const Icon(Icons.remove, color: Colors.red),
               ),
 
-              // Quantity Box
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 28,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.red),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  "$qty", // Display API quantity instead of `_productQuantities[name]`
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+              // Quantity Input Box (Editable)
+              SizedBox(
+                width: 50,
+                child: TextField(
+                  controller: _controller,
+                  textAlign: TextAlign.center,
+                  keyboardType: TextInputType.number,
+                  onSubmitted: (value) {
+                    int? enteredQty = int.tryParse(value);
+                    if (enteredQty != null) {
+                      _updateQty(enteredQty);
+                    }
+                  },
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 4),
                   ),
                 ),
               ),
 
               // Plus Button
               IconButton(
-                onPressed: () {
-                  setState(() {
-                    qty = qty + 1; // Increase quantity
-                  });
-                },
+                onPressed: () => _updateQty(qty + 1),
                 icon: const Icon(Icons.add, color: Colors.red),
               ),
 
               const SizedBox(width: 10),
 
-              // Price Display
-              Text(price, style: const TextStyle(fontSize: 16)),
+              // Price & Tax Details
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    "Rs ${calculatedSRate.toStringAsFixed(2)}",
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  // GST Breakdown
+
+                  // Total Tax
+                  Text(
+                    "GST (15%): Rs ${totalTax.toStringAsFixed(2)}",
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
+                  ),
+
+                  // Final Amount After Tax
+                ],
+              ),
             ],
           ),
         ],
