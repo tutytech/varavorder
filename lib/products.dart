@@ -45,58 +45,72 @@ class _CreateBranchState extends State<products> {
   //   fetchBranches(); // Fetch branches when the widget dependencies change
   // }
 
-  Future<void> _createProduts() async {
+  Future<void> _createProducts() async {
     final prefs = await SharedPreferences.getInstance();
-    final String? userId = prefs.getString('userId');
-    final String? companyId = prefs.getString('companyId');
-    // Check if the form is valid
+    final String? userId = prefs.getString('userId') ?? "";
+    final String? companyId = prefs.getString('companyId') ?? "";
 
     final String apiUrl = 'https://varav.tutytech.in/product.php';
 
     try {
-      // Print the request URL and body for debugging
-      print('Request URL: $apiUrl');
-      print(
-        'Request body: ${{'type': 'insert', 'productcode': productCodeController.text, 'productname': productNameController.text, 'purchaseunit': selectedPurchaseUnit, 'qty': qtyController.text, 'salesunit': selectedSalesUnit, 'kg': noOfKgsController.text, 'salesrate': salesRateController.text, 'wholesalerate': wholeSaleRateController.text, 'purchaserate': purchaseRateController.text, 'mrp': mrpController.text, 'gst': gstController.text, 'gsttype': selectedGstType}}',
-      );
+      // Prepare request body and ensure all values are strings
+      Map<String, String> requestBody = {
+        'type': 'insert',
+        'productcode':
+            productCodeController.text.isNotEmpty
+                ? productCodeController.text
+                : "N/A",
+        'productname':
+            productNameController.text.isNotEmpty
+                ? productNameController.text
+                : "N/A",
+        'purchaseunit': selectedPurchaseUnit ?? "N/A",
+        'purchaseqty': qtyController.text.isNotEmpty ? qtyController.text : "0",
+        'salesunit': selectedSalesUnit ?? "N/A",
+        'salesqty':
+            noOfKgsController.text.isNotEmpty ? noOfKgsController.text : "0",
+        'salesrate':
+            salesRateController.text.isNotEmpty
+                ? salesRateController.text
+                : "0",
+        'wholesalerate':
+            wholeSaleRateController.text.isNotEmpty
+                ? wholeSaleRateController.text
+                : "0",
+        'purchaserate':
+            purchaseRateController.text.isNotEmpty
+                ? purchaseRateController.text
+                : "0",
+        'mrp': mrpController.text.isNotEmpty ? mrpController.text : "0",
+        'gst': gstController.text.isNotEmpty ? gstController.text : "0",
+        'gsttype': selectedGstType ?? "INCLUDE GST",
+        'entryid': userId.toString(),
+        'companyid': companyId.toString(),
+      };
 
+      // Debugging: Print request body
+      print('Request URL: $apiUrl');
+      print('Request body: $requestBody');
+
+      // Send request
       final response = await http.post(
         Uri.parse(apiUrl),
-
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
-          'type': 'insert',
-          'productcode': productCodeController.text,
-          'productname': productNameController.text,
-          'purchaseunit': selectedPurchaseUnit,
-          'purchaseqty': qtyController.text,
-          'salesunit': selectedSalesUnit,
-          'salesqty': noOfKgsController.text,
-          'salesrate': salesRateController.text,
-          'wholesalerate': wholeSaleRateController.text,
-          'purchaserate': purchaseRateController.text,
-          'mrp': mrpController.text,
-          'gst': gstController.text,
-          'gsttype': selectedGstType,
-          'entryid': userId,
-          'companyid': companyId,
-        },
+        body: requestBody,
       );
 
-      // Print the response body for debugging
+      // Debugging: Print response
       print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
-
-        // Check if responseData contains staffId
+        print('Response Data: $responseData');
       } else {
         _showSnackBar(
-          'Failed to create ledger. Status code: ${response.statusCode}',
+          'Failed to create product. Status code: ${response.statusCode}',
         );
       }
     } catch (e) {
-      // Print the error for debugging
       print('Error: $e');
       _showSnackBar('An error occurred: $e');
     }
@@ -327,7 +341,7 @@ class _CreateBranchState extends State<products> {
                               child: ElevatedButton(
                                 onPressed: () {
                                   if (_formKey.currentState!.validate()) {
-                                    _createProduts();
+                                    _createProducts();
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(

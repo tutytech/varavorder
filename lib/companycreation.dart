@@ -35,6 +35,7 @@ class _CreateAccountScreenState extends State<CompanyCreationScreen> {
       final String address = _addressController.text.trim();
       final String email = _emailController.text.trim();
       final String phoneNumber = _phoneNumberController.text.trim();
+      final String gstin = _gstinController.text.trim();
 
       final uri = Uri.parse('https://varav.tutytech.in/company.php');
       final requestBody = {
@@ -43,6 +44,7 @@ class _CreateAccountScreenState extends State<CompanyCreationScreen> {
         'address': address,
         'phoneno': phoneNumber,
         'email': email,
+        'gstin': gstin,
       };
 
       print('Request URL: $uri');
@@ -177,6 +179,14 @@ class _CreateAccountScreenState extends State<CompanyCreationScreen> {
                         'PhoneNo',
                         _phoneNumberController,
                         Icons.email,
+                        false,
+                      ),
+
+                      const SizedBox(height: 30),
+                      _buildTextField(
+                        'GstIn',
+                        _gstinController,
+                        Icons.production_quantity_limits,
                         false,
                       ),
 

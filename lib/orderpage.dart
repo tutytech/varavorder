@@ -27,14 +27,19 @@ class _OrderPageState extends State<OrderPage> {
   List<Map<String, dynamic>> productList = [];
   double gstPer = 5.0;
   int quantity = 0; // Default quantity starts from 0
-  final TextEditingController _controller = TextEditingController();
+  Map<int, TextEditingController> controllers = {};
   double numericPrice = 0;
   double totalPrice = 0;
+  double totalCGST = 0;
+  double totalSGST = 0;
+  double totalIGST = 0;
+  double gstRate = 0;
+  double gstAmount = 0;
+
   @override
   void initState() {
     super.initState();
     fetchProducts();
-    _controller.text = quantity.toString();
   }
 
   Future<void> fetchProducts() async {
@@ -55,13 +60,24 @@ class _OrderPageState extends State<OrderPage> {
           setState(() {
             productList =
                 decodedResponse.map<Map<String, dynamic>>((product) {
+                  int productId = int.tryParse(product['id'].toString()) ?? 0;
+                  double gstRate =
+                      double.tryParse(product['gst'].toString()) ?? 0.0;
+
+                  // ✅ Print GST value for each product
+                  print("Product ID: $productId | GST Rate: $gstRate%");
+
+                  // Create or update controller for this product
+                  controllers[productId] = TextEditingController(
+                    text: quantity.toString(),
+                  );
+
                   return {
+                    'id': productId,
                     'name': product['productname'].toString(),
                     'price':
-                        product['salesrate'].toString(), // Ensure it's a string
-                    'qty':
-                        int.tryParse(product['salesqty'].toString()) ??
-                        0, // Ensure it's an integer
+                        double.tryParse(product['salesrate'].toString()) ?? 0.0,
+                    'qty': quantity,
                     'unit': product['salesunit'].toString(),
                     'mrp': double.tryParse(product['mrp'].toString()) ?? 0.0,
                     'salesRate':
@@ -69,6 +85,7 @@ class _OrderPageState extends State<OrderPage> {
                     'purRate':
                         double.tryParse(product['purchaserate'].toString()) ??
                         0.0,
+                    'gst': gstRate, // ✅ Store GST as a number
                   };
                 }).toList();
           });
@@ -85,13 +102,27 @@ class _OrderPageState extends State<OrderPage> {
     }
   }
 
-  void _updateQty(int newQty, {bool fromTextField = false}) {
+  double getGSTPercentage() {
+    if (productList.isNotEmpty) {
+      return double.tryParse(productList.first['gst'].toString()) ?? 0.0;
+    }
+    return 0.0;
+  }
+
+  void _updateQty(int productId, int newQty, {bool fromTextField = false}) {
     setState(() {
       if (newQty >= 0) {
-        quantity = newQty;
-        totalPrice = numericPrice * quantity; // Update totalPrice
-        if (!fromTextField) {
-          _controller.text = quantity.toString();
+        // ✅ Find the product in the list and update its quantity
+        int index = productList.indexWhere(
+          (product) => product['id'] == productId,
+        );
+        if (index != -1) {
+          productList[index]['qty'] = newQty;
+
+          // ✅ Update the TextField controller value
+          if (!fromTextField) {
+            controllers[productId]?.text = newQty.toString();
+          }
         }
       }
     });
@@ -109,28 +140,53 @@ class _OrderPageState extends State<OrderPage> {
     double total = 0.0;
     for (var product in productList) {
       double price = getNumericPrice(product['price'].toString());
+      int qty = product['qty'] ?? 0;
+      double totalPrice = price * qty; // Directly use totalPrice
 
-      // Use the local 'quantity' instead of 'product['qty']'
-      double totalPrice = price * quantity;
+      print(
+        "Product: ${product['name']}, Price: $price, Qty: $qty, TotalPrice: $totalPrice",
+      );
 
-      double calculatedSRate = quantity > 0 ? calculateSRate(totalPrice) : 0.0;
-      total += calculatedSRate;
+      total += totalPrice; // Sum up totalPrice directly
     }
+    print("Final Total: $total");
     return total;
   }
 
-  double calculateGST(double amount) {
-    return amount * 0.05; // 5% GST
+  double calculateTotalGST() {
+    double totalGST = 0.0;
+
+    for (var product in productList) {
+      double price = double.tryParse(product['salesRate'].toString()) ?? 0.0;
+      int qty = product['qty'] ?? 0;
+      double gstRate = double.tryParse(product['gst'].toString()) ?? 0.0;
+
+      double totalPrice = price * qty; // Total price before GST
+      double gstAmount =
+          (totalPrice * gstRate) / 100; // Calculate GST using API value
+
+      totalGST += gstAmount; // Sum up total GST
+    }
+
+    // Calculate total CGST and SGST by dividing the total GST rate by 2
+    totalCGST = totalGST / 2;
+    totalSGST = totalGST / 2;
+    totalIGST = 0; // IGST is set to 0
+
+    print("Total GST Amount: $totalGST");
+    print("CGST: $totalCGST, SGST: $totalSGST, IGST: $totalIGST");
+
+    return totalGST;
   }
 
   @override
   Widget build(BuildContext context) {
     double totalAmount = calculateTotal(); // Now dynamically calculated
 
-    double cgst = calculateGST(totalAmount);
-    double sgst = calculateGST(totalAmount);
-    double igst = calculateGST(totalAmount);
-    double totalWithGST = totalAmount + cgst + sgst + igst;
+    double cgst = calculateTotalGST();
+    double sgst = calculateTotalGST();
+    double igst = calculateTotalGST();
+    double totalWithGST = totalAmount + totalCGST + totalSGST + totalIGST;
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false, // Removes the back arrow
@@ -160,9 +216,10 @@ class _OrderPageState extends State<OrderPage> {
                 children:
                     productList.map((product) {
                       return productItem(
+                        product['id'] as int,
                         product['name'] as String,
-                        product['price'] as String,
-                        product['qty'] as int,
+                        product['price'].toString(),
+
                         product['unit'] as String,
                         product['mrp'] as double,
                         product['salesRate'] as double,
@@ -206,12 +263,21 @@ class _OrderPageState extends State<OrderPage> {
                       "Total",
                       "Rs.${totalAmount.toStringAsFixed(2)}",
                     ),
-                    billDetailRow("CGST (5%)", "Rs.${cgst.toStringAsFixed(2)}"),
-                    billDetailRow("SGST (5%)", "Rs.${sgst.toStringAsFixed(2)}"),
-                    billDetailRow("IGST (5%)", "Rs.${igst.toStringAsFixed(2)}"),
+                    billDetailRow(
+                      "CGST ",
+                      "Rs.${totalCGST.toStringAsFixed(2)}",
+                    ),
+                    billDetailRow(
+                      "SGST ",
+                      "Rs.${totalSGST.toStringAsFixed(2)}",
+                    ),
+                    billDetailRow(
+                      "IGST ",
+                      "Rs.${totalIGST.toStringAsFixed(2)}",
+                    ),
                     const Divider(),
                     billDetailRow(
-                      "To Pay",
+                      "Bill Amount",
                       "Rs.${totalWithGST.toStringAsFixed(2)}",
                       isBold: true,
                     ),
@@ -271,30 +337,27 @@ class _OrderPageState extends State<OrderPage> {
   }
 
   Widget productItem(
+    int productId,
     String name,
     String price,
-    int qty,
     String unit,
     double mrp,
     double salesRate,
     double purRate,
   ) {
-    numericPrice = getNumericPrice(price);
-    print('Numeric Price extracted from "$price": $numericPrice');
-    totalPrice = numericPrice * quantity;
+    int qty =
+        productList.firstWhere(
+          (product) => product['id'] == productId,
+          orElse: () => {'qty': 0},
+        )['qty'];
 
-    // Calculate 5% SGST, 5% CGST, 5% TGST
+    double numericPrice = getNumericPrice(price);
+    double totalPrice = numericPrice * qty;
     double sgst = totalPrice * 0.05;
     double cgst = totalPrice * 0.05;
     double tgst = totalPrice * 0.05;
-
-    // Total Tax (15% of total price)
     double totalTax = sgst + cgst + tgst;
-
-    // Final amount after adding tax
     double finalAmount = totalPrice + totalTax;
-
-    double calculatedSRate = quantity > 0 ? calculateSRate(totalPrice) : 0.0;
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -306,15 +369,14 @@ class _OrderPageState extends State<OrderPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Image Placeholder + Product Details Centered
           Column(
             children: [
               SizedBox(
                 width: 60,
                 height: 60,
-                child: Image.asset(
-                  'images/profile.jpg', // Replace with your local placeholder image
-                  fit: BoxFit.cover,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: Image.asset('images/rectangle.png', fit: BoxFit.cover),
                 ),
               ),
               const SizedBox(height: 6),
@@ -337,11 +399,9 @@ class _OrderPageState extends State<OrderPage> {
             ],
           ),
 
-          // Quantity, Pricing, and Tax Details
           Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Unit Text
               Text(unit, style: TextStyle(fontSize: 14, color: Colors.grey)),
               SizedBox(height: 6),
 
@@ -352,7 +412,11 @@ class _OrderPageState extends State<OrderPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     IconButton(
-                      onPressed: () => _updateQty(quantity - 1),
+                      onPressed:
+                          () => _updateQty(
+                            productId,
+                            qty - 1,
+                          ), // ✅ Updates dynamically
                       icon: Icon(Icons.remove, color: Colors.red),
                       padding: EdgeInsets.zero,
                     ),
@@ -360,20 +424,27 @@ class _OrderPageState extends State<OrderPage> {
                       width: 40,
                       height: 30,
                       child: TextField(
-                        controller: _controller,
+                        controller: controllers[productId],
                         textAlign: TextAlign.center,
                         keyboardType: TextInputType.number,
                         onChanged: (value) {
-                          // This updates totalPrice live when typing
                           int? enteredQty = int.tryParse(value);
                           if (enteredQty != null) {
-                            _updateQty(enteredQty, fromTextField: true);
+                            _updateQty(
+                              productId,
+                              enteredQty,
+                              fromTextField: true,
+                            );
                           }
                         },
                         onSubmitted: (value) {
                           int? enteredQty = int.tryParse(value);
                           if (enteredQty != null) {
-                            _updateQty(enteredQty, fromTextField: true);
+                            _updateQty(
+                              productId,
+                              enteredQty,
+                              fromTextField: true,
+                            );
                           }
                         },
                         decoration: InputDecoration(
@@ -386,7 +457,11 @@ class _OrderPageState extends State<OrderPage> {
                       ),
                     ),
                     IconButton(
-                      onPressed: () => _updateQty(quantity + 1),
+                      onPressed:
+                          () => _updateQty(
+                            productId,
+                            qty + 1,
+                          ), // ✅ Updates dynamically
                       icon: Icon(Icons.add, color: Colors.red),
                       padding: EdgeInsets.zero,
                     ),
@@ -396,18 +471,28 @@ class _OrderPageState extends State<OrderPage> {
 
               SizedBox(height: 6),
 
-              // Total Price
               Text(
                 "Rs ${totalPrice.toStringAsFixed(2)}",
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
 
               SizedBox(height: 4),
+              Builder(
+                builder: (context) {
+                  // Find the correct GST rate for this product
+                  double gstRate =
+                      productList.firstWhere(
+                        (product) => product['id'] == productId,
+                      )['gst'];
 
-              // GST Text
-              Text(
-                "GST (15%): Rs ${totalTax.toStringAsFixed(2)}",
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+                  // Calculate GST amount
+                  double gstAmount = (totalPrice * gstRate) / 100;
+
+                  return Text(
+                    "GST (${gstRate.toStringAsFixed(2)}%): Rs ${gstAmount.toStringAsFixed(2)}",
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  );
+                },
               ),
             ],
           ),
