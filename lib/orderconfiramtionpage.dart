@@ -3,11 +3,30 @@ import 'package:orderapp/customersearchform.dart';
 import 'package:orderapp/widgets/customnavigation.dart';
 
 class OrderConfirmation extends StatefulWidget {
-  final String? name;
-  final String? phoneNo;
+  final String name;
+  final String phoneNo;
+  final String address;
+  final List<Map<String, dynamic>> products;
+  final double price;
+  final int qty;
+  final double total;
+  final double billAmount, totalgst, totalamount;
+  final double gstRate;
 
-  const OrderConfirmation({Key? key, this.name, this.phoneNo})
-    : super(key: key);
+  const OrderConfirmation({
+    Key? key,
+    required this.name,
+    required this.phoneNo,
+    required this.address,
+    required this.products,
+    required this.price,
+    required this.qty,
+    required this.total,
+    required this.billAmount,
+    required this.gstRate,
+    required this.totalgst,
+    required this.totalamount,
+  }) : super(key: key);
 
   @override
   _OrderPageState createState() => _OrderPageState();
@@ -50,8 +69,8 @@ class _OrderPageState extends State<OrderConfirmation> {
                 "Phone No: ${widget.phoneNo}",
                 style: const TextStyle(fontSize: 18),
               ),
-              const Text(
-                "Address: 123 Main Street, City, Country",
+              Text(
+                "Address: ${widget.address}",
                 style: TextStyle(fontSize: 18),
               ),
               const SizedBox(height: 20),
@@ -62,9 +81,16 @@ class _OrderPageState extends State<OrderConfirmation> {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
-              _buildProductItem("Product A", 2, 50.0),
-              _buildProductItem("Product B", 1, 80.0),
-              _buildProductItem("Product C", 3, 30.0),
+              Column(
+                children:
+                    widget.products.map((product) {
+                      return _buildProductItem(
+                        product['name'],
+                        product['qty'],
+                        product['total'],
+                      );
+                    }).toList(),
+              ),
 
               const Divider(thickness: 1, height: 30),
 
@@ -74,9 +100,13 @@ class _OrderPageState extends State<OrderConfirmation> {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
-              _buildBillDetail("Subtotal", 290.0),
-              _buildBillDetail("GST (5%)", 14.5),
-              _buildBillDetail("Total Amount", 304.5, isTotal: true),
+              _buildBillDetail("Subtotal", widget.billAmount),
+              _buildBillDetail("GST (5%)", widget.totalgst),
+              _buildBillDetail(
+                "Total Amount",
+                widget.totalamount,
+                isTotal: true,
+              ),
 
               const SizedBox(height: 30),
 
@@ -130,14 +160,23 @@ class _OrderPageState extends State<OrderConfirmation> {
     );
   }
 
-  Widget _buildProductItem(String name, int quantity, double price) {
+  Widget _buildProductItem(String name, int qty, double price) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text("$name x$quantity"),
-          Text("\$${(quantity * price).toStringAsFixed(2)}"),
+          // Product Name × Quantity
+          Text(
+            "$name × $qty",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          ),
+
+          // Price at the End
+          Text(
+            "Rs ${price.toStringAsFixed(2)}",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
         ],
       ),
     );
@@ -157,7 +196,7 @@ class _OrderPageState extends State<OrderConfirmation> {
             ),
           ),
           Text(
-            "\$${amount.toStringAsFixed(2)}",
+            "\Rs.${amount.toStringAsFixed(2)}",
             style: TextStyle(
               fontSize: isTotal ? 20 : 16,
               fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,

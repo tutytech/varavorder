@@ -9,9 +9,14 @@ import 'package:http/http.dart' as http;
 class OrderPage extends StatefulWidget {
   final String name;
   final String phoneNo;
+  final String address;
 
-  const OrderPage({Key? key, required this.name, required this.phoneNo})
-    : super(key: key);
+  const OrderPage({
+    Key? key,
+    required this.name,
+    required this.phoneNo,
+    required this.address,
+  }) : super(key: key);
 
   @override
   _OrderPageState createState() => _OrderPageState();
@@ -24,10 +29,14 @@ class _OrderPageState extends State<OrderPage> {
     "Maharaja mac": 1,
   };
   List<String> productNames = [];
+  List<Map<String, dynamic>> cartItems = [];
+
   List<Map<String, dynamic>> productList = [];
   double gstPer = 5.0;
   int quantity = 0; // Default quantity starts from 0
   Map<int, TextEditingController> controllers = {};
+  List<Map<String, dynamic>> selectedProducts = [];
+
   double numericPrice = 0;
   double totalPrice = 0;
   double totalCGST = 0;
@@ -123,8 +132,34 @@ class _OrderPageState extends State<OrderPage> {
           if (!fromTextField) {
             controllers[productId]?.text = newQty.toString();
           }
+
+          // ✅ Add or update product in selectedProducts
+          int selectedIndex = selectedProducts.indexWhere(
+            (product) => product['id'] == productId,
+          );
+
+          if (selectedIndex != -1) {
+            // ✅ Update existing product quantity
+            selectedProducts[selectedIndex]['qty'] = newQty;
+            selectedProducts[selectedIndex]['total'] =
+                newQty * productList[index]['price'];
+          } else {
+            // ✅ Add new product to selectedProducts
+            selectedProducts.add({
+              'id': productList[index]['id'],
+              'name': productList[index]['name'],
+              'qty': newQty,
+              'price': productList[index]['price'],
+              'gst': productList[index]['gst'],
+              'total': newQty * productList[index]['price'],
+            });
+          }
+
+          // ✅ Remove products with 0 quantity
+          selectedProducts.removeWhere((p) => p['qty'] == 0);
         }
       }
+      print("Updated selectedProducts: $selectedProducts"); // ✅ Debugging
     });
   }
 
@@ -285,16 +320,36 @@ class _OrderPageState extends State<OrderPage> {
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) => OrderConfirmation(
-                                  name: widget.name,
-                                  phoneNo: widget.phoneNo,
-                                ),
-                          ),
-                        );
+                        if (productList.isNotEmpty) {
+                          Map<String, dynamic> selectedProduct =
+                              productList[0]; // Selecting first product
+                          print("Selected Products: $selectedProducts");
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => OrderConfirmation(
+                                    name: widget.name,
+                                    phoneNo: widget.phoneNo,
+                                    address: widget.address,
+                                    products: selectedProducts,
+                                    price: selectedProduct['price'],
+                                    qty: selectedProduct['qty'],
+                                    total:
+                                        selectedProduct['qty'] *
+                                        selectedProduct['price'],
+                                    billAmount: totalAmount,
+                                    // Ensure this is correctly calculated
+                                    gstRate: selectedProduct['gst'],
+                                    totalgst: totalCGST + totalSGST + totalIGST,
+                                    totalamount: totalWithGST,
+                                  ),
+                            ),
+                          );
+                        } else {
+                          print("No product selected!");
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
