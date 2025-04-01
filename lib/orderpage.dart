@@ -7,13 +7,14 @@ import 'package:orderapp/widgets/customnavigation.dart';
 import 'package:http/http.dart' as http;
 
 class OrderPage extends StatefulWidget {
-  final String name;
+  final String name, id;
   final String phoneNo;
   final String address;
 
   const OrderPage({
     Key? key,
     required this.name,
+    required this.id,
     required this.phoneNo,
     required this.address,
   }) : super(key: key);
@@ -330,6 +331,7 @@ class _OrderPageState extends State<OrderPage> {
                             MaterialPageRoute(
                               builder:
                                   (context) => OrderConfirmation(
+                                    id: widget.id,
                                     name: widget.name,
                                     phoneNo: widget.phoneNo,
                                     address: widget.address,
@@ -342,6 +344,10 @@ class _OrderPageState extends State<OrderPage> {
                                     billAmount: totalAmount,
                                     // Ensure this is correctly calculated
                                     gstRate: selectedProduct['gst'],
+
+                                    totalcgst: totalCGST,
+                                    totalsgst: totalSGST,
+                                    totaligst: totalIGST,
                                     totalgst: totalCGST + totalSGST + totalIGST,
                                     totalamount: totalWithGST,
                                   ),

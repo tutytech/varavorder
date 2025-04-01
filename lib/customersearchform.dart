@@ -71,13 +71,22 @@ class _CustomerSearchPageState extends State<CustomerSearchPage> {
     });
   }
 
-  void navigateToOrderPage(String name, String phoneNo, String address) {
+  void navigateToOrderPage(
+    String name,
+    String phoneNo,
+    String address,
+    String id,
+  ) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder:
-            (context) =>
-                OrderPage(name: name, phoneNo: phoneNo, address: address),
+            (context) => OrderPage(
+              name: name,
+              phoneNo: phoneNo,
+              address: address,
+              id: id,
+            ),
       ),
     );
   }
@@ -136,6 +145,7 @@ class _CustomerSearchPageState extends State<CustomerSearchPage> {
                                   customer['customername'] ?? '',
                                   customer['mobileno'] ?? '',
                                   customer['address'] ?? '',
+                                  customer['id'] ?? '',
                                 );
                               },
                               style: ElevatedButton.styleFrom(
