@@ -1,9 +1,129 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:orderapp/customersearchform.dart';
 import 'package:orderapp/widgets/customnavigation.dart';
+import 'package:http/http.dart' as http;
 
-class FoodGoHome extends StatelessWidget {
+class FoodGoHome extends StatefulWidget {
   const FoodGoHome({Key? key}) : super(key: key);
+
+  @override
+  _FoodGoHomeState createState() => _FoodGoHomeState();
+}
+
+class _FoodGoHomeState extends State<FoodGoHome> {
+  int totalCustomerCount = 0;
+  int totalProducts = 0;
+  int totalOrders = 0;
+  int totalBillAmount = 0;
+  @override
+  void initState() {
+    super.initState();
+    fetchCustomerData();
+    fetchTotalProducts();
+    fetchTotalOrders();
+  }
+
+  Future<void> fetchCustomerData() async {
+    const String _baseUrl = 'https://varav.tutytech.in/ledgerform.php';
+    final Map<String, String> requestBody = {'type': 'select'};
+
+    try {
+      final response = await http.post(
+        Uri.parse(_baseUrl),
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: requestBody,
+      );
+
+      if (response.statusCode == 200) {
+        final decodedResponse = json.decode(response.body);
+        if (decodedResponse['totalCount'] != null) {
+          setState(() {
+            totalCustomerCount =
+                decodedResponse['totalCount']; // Set the total customer count
+          });
+        }
+      } else {
+        throw Exception('Failed to fetch customer data');
+      }
+    } catch (e) {
+      print('Error occurred: $e');
+    }
+  }
+
+  Future<void> fetchTotalProducts() async {
+    const String apiUrl = 'https://varav.tutytech.in/product.php'; // API URL
+
+    try {
+      // Prepare the request body
+      final Map<String, String> requestBody = {'type': 'select'};
+
+      // Make the POST request
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: requestBody,
+      );
+
+      // If the request is successful, parse the response
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> decodedResponse = json.decode(response.body);
+
+        // Check if response contains totalCount
+        if (decodedResponse.containsKey('totalCount')) {
+          setState(() {
+            totalProducts = decodedResponse['totalCount']; // Store total count
+          });
+        } else {
+          throw Exception('Total count not found in response');
+        }
+      } else {
+        throw Exception('Failed to load products');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  Future<void> fetchTotalOrders() async {
+    const String apiUrl =
+        'https://varav.tutytech.in/orderconfirm.php'; // API URL
+
+    try {
+      // Prepare the request body
+      final Map<String, String> requestBody = {'type': 'select'};
+
+      // Make the POST request
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: requestBody,
+      );
+
+      // If the request is successful, parse the response
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> decodedResponse = json.decode(response.body);
+
+        // Check if response contains totalCount and totalBillAmount
+        if (decodedResponse.containsKey('totalCount') &&
+            decodedResponse.containsKey('totalBillAmount')) {
+          setState(() {
+            totalOrders =
+                decodedResponse['totalCount']; // Store total order count
+            totalBillAmount =
+                decodedResponse['totalBillAmount']; // Store total bill amount
+          });
+        } else {
+          throw Exception('Required data not found in response');
+        }
+      } else {
+        throw Exception('Failed to load data');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,10 +158,13 @@ class FoodGoHome extends StatelessWidget {
                 mainAxisSpacing: 10,
                 childAspectRatio: 0.8,
                 children: [
-                  _buildFoodCard('Today Order', '0'),
-                  _buildFoodCard('Order Value', '0'),
-                  _buildFoodCard('Total Customer', '0'),
-                  _buildFoodCard('Total Products', '0'),
+                  _buildFoodCard('Total Order', totalOrders.toString()),
+                  _buildFoodCard('Order Value', totalBillAmount.toString()),
+                  _buildFoodCard(
+                    'Total Customer',
+                    totalCustomerCount.toString(),
+                  ),
+                  _buildFoodCard('Total Products', totalProducts.toString()),
                 ],
               ),
             ),
