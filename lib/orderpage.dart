@@ -64,12 +64,24 @@ class _OrderPageState extends State<OrderPage> {
       );
 
       if (response.statusCode == 200) {
-        final decodedResponse = json.decode(response.body);
+        if (response.body.isEmpty) {
+          throw Exception('Empty response from server');
+        }
 
-        if (decodedResponse is List && decodedResponse.isNotEmpty) {
+        final decodedResponse = json.decode(response.body);
+        print('Decoded Response: $decodedResponse'); // ✅ Debugging step
+
+        if (decodedResponse is Map<String, dynamic> &&
+            decodedResponse.containsKey('data')) {
+          final List<dynamic> productData = decodedResponse['data'];
+
+          if (productData.isEmpty) {
+            throw Exception('No products found');
+          }
+
           setState(() {
             productList =
-                decodedResponse.map<Map<String, dynamic>>((product) {
+                productData.map<Map<String, dynamic>>((product) {
                   int productId = int.tryParse(product['id'].toString()) ?? 0;
                   double gstRate =
                       double.tryParse(product['gst'].toString()) ?? 0.0;
@@ -100,7 +112,7 @@ class _OrderPageState extends State<OrderPage> {
                 }).toList();
           });
         } else {
-          throw Exception('Unexpected response format');
+          throw Exception('Invalid response format');
         }
       } else {
         throw Exception(

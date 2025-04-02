@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:orderapp/orderlist.dart';
 import 'package:orderapp/orderpage.dart';
 import 'package:orderapp/widgets/customnavigation.dart';
 
@@ -31,18 +32,28 @@ class _CustomerSearchPageState extends State<CustomerSearchPage> {
         body: requestBody,
       );
 
+      print('Raw Response: ${response.body}');
+
       if (response.statusCode == 200) {
         final decodedResponse = json.decode(response.body);
-        if (decodedResponse is List) {
+
+        if (decodedResponse is Map<String, dynamic> &&
+            decodedResponse.containsKey('data')) {
+          final List<dynamic> data = decodedResponse['data'];
+
           setState(() {
-            customers = List<Map<String, dynamic>>.from(decodedResponse);
+            customers = List<Map<String, dynamic>>.from(data);
             filteredCustomers = customers;
           });
         } else {
-          throw Exception('Unexpected response format');
+          throw Exception(
+            'Unexpected response format: ${decodedResponse.runtimeType}',
+          );
         }
       } else {
-        throw Exception('Failed to fetch data');
+        throw Exception(
+          'Failed to fetch data. Status code: ${response.statusCode}',
+        );
       }
     } catch (e) {
       print('Error: $e');
@@ -81,7 +92,7 @@ class _CustomerSearchPageState extends State<CustomerSearchPage> {
       context,
       MaterialPageRoute(
         builder:
-            (context) => OrderPage(
+            (context) => Orderlist(
               name: name,
               phoneNo: phoneNo,
               address: address,
