@@ -29,6 +29,7 @@ class Orderlist extends StatefulWidget {
 class _BranchListPageState extends State<Orderlist> {
   late Future<List<Map<String, dynamic>>> _branchListFuture;
   List<Map<String, dynamic>> _allBranches = [];
+  List<Map<String, dynamic>> orders = [];
   List<Map<String, dynamic>> _filteredBranches = [];
   final TextEditingController _searchController = TextEditingController();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -48,6 +49,23 @@ class _BranchListPageState extends State<Orderlist> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<bool> cancelOrder(int orderId) async {
+    final url = Uri.parse('https://varav.tutytech.in/orderconfirm.php');
+
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/x-www-form-urlencoded"},
+      body: {'type': 'cancel', 'orderId': orderId.toString()},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['success'] == true;
+    } else {
+      return false;
+    }
   }
 
   Future<List<Map<String, dynamic>>> fetchTotalOrders() async {
@@ -80,6 +98,11 @@ class _BranchListPageState extends State<Orderlist> {
       print('Error: $e');
       return [];
     }
+  }
+
+  Future<List<int>> fetchOrderIds() async {
+    orders = await fetchTotalOrders();
+    return orders.map<int>((order) => order['id'] as int).toList();
   }
 
   void _filterBranches(String query) {
@@ -357,9 +380,27 @@ class _BranchListPageState extends State<Orderlist> {
 
                                         DataCell(
                                           ElevatedButton(
-                                            onPressed: () {
-                                              // Handle cancel action
-                                              print('Cancel button pressed');
+                                            onPressed: () async {
+                                              int orderId =
+                                                  int.tryParse(
+                                                    branch['id'].toString(),
+                                                  ) ??
+                                                  0;
+                                              if (orderId != 0) {
+                                                bool success =
+                                                    await cancelOrder(orderId);
+                                                if (success) {
+                                                  print(
+                                                    'Order $orderId canceled successfully',
+                                                  );
+                                                } else {
+                                                  print(
+                                                    'Failed to cancel order $orderId',
+                                                  );
+                                                }
+                                              } else {
+                                                print('Invalid Order ID');
+                                              }
                                             },
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: Colors.red,
