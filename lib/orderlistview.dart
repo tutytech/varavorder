@@ -50,6 +50,23 @@ class _BranchListPageState extends State<Orderlistview> {
     super.dispose();
   }
 
+  Future<bool> cancelOrder(int orderId) async {
+    final url = Uri.parse('https://varav.tutytech.in/orderconfirm.php');
+
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/x-www-form-urlencoded"},
+      body: {'type': 'cancel', 'orderId': orderId.toString()},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['success'] == true;
+    } else {
+      return false;
+    }
+  }
+
   Future<List<Map<String, dynamic>>> fetchTotalOrders() async {
     String apiUrl = 'https://varav.tutytech.in/orderconfirm.php'; // API URL
 
@@ -316,9 +333,27 @@ class _BranchListPageState extends State<Orderlistview> {
 
                                         DataCell(
                                           ElevatedButton(
-                                            onPressed: () {
-                                              // Handle cancel action
-                                              print('Cancel button pressed');
+                                            onPressed: () async {
+                                              int orderId =
+                                                  int.tryParse(
+                                                    branch['id'].toString(),
+                                                  ) ??
+                                                  0;
+                                              if (orderId != 0) {
+                                                bool success =
+                                                    await cancelOrder(orderId);
+                                                if (success) {
+                                                  print(
+                                                    'Order $orderId canceled successfully',
+                                                  );
+                                                } else {
+                                                  print(
+                                                    'Failed to cancel order $orderId',
+                                                  );
+                                                }
+                                              } else {
+                                                print('Invalid Order ID');
+                                              }
                                             },
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor:
