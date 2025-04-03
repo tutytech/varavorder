@@ -10,10 +10,12 @@ class OrderPage extends StatefulWidget {
   final String name, id;
   final String phoneNo;
   final String address;
+  final List<Map<String, dynamic>>? customers;
 
   const OrderPage({
     Key? key,
     required this.name,
+    this.customers,
     required this.id,
     required this.phoneNo,
     required this.address,

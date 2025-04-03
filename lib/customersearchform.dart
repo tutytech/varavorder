@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:orderapp/orderlist.dart';
+import 'package:orderapp/orderlistview.dart';
 import 'package:orderapp/orderpage.dart';
 import 'package:orderapp/widgets/customnavigation.dart';
 
@@ -14,6 +15,7 @@ class _CustomerSearchPageState extends State<CustomerSearchPage> {
   final TextEditingController searchController = TextEditingController();
   List<Map<String, dynamic>> customers = [];
   List<Map<String, dynamic>> filteredCustomers = [];
+  Map<String, dynamic>? selectedCustomer;
 
   @override
   void initState() {
@@ -82,21 +84,16 @@ class _CustomerSearchPageState extends State<CustomerSearchPage> {
     });
   }
 
-  void navigateToOrderPage(
-    String name,
-    String phoneNo,
-    String address,
-    String id,
-  ) {
+  void navigateToOrderPage(Map<String, dynamic> customer) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder:
             (context) => Orderlist(
-              name: name,
-              phoneNo: phoneNo,
-              address: address,
-              id: id,
+              name: customer['customername'] ?? '',
+              phoneNo: customer['mobileno'] ?? '',
+              address: customer['address'] ?? '',
+              id: customer['id'] ?? '',
             ),
       ),
     );
@@ -115,15 +112,98 @@ class _CustomerSearchPageState extends State<CustomerSearchPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            TextField(
-              controller: searchController,
-              decoration: const InputDecoration(
-                labelText: 'Search by Name, Phone No, or GSTIN',
-                border: InputBorder.none,
-                prefixIcon: Icon(Icons.search, color: Colors.black),
-              ),
-              onChanged: filterSearch,
+            Row(
+              children: [
+                Expanded(
+                  // ✅ Makes TextField take full width
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          spreadRadius: 1,
+                          blurRadius: 6,
+                          offset: const Offset(2, 2),
+                        ),
+                      ],
+                    ),
+                    child: TextField(
+                      controller: searchController,
+                      decoration: const InputDecoration(
+                        labelText: 'Search',
+                        border: InputBorder.none,
+                        prefixIcon: Icon(Icons.search, color: Colors.black),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                      ),
+                      onChanged: filterSearch,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: () async {
+                    await fetchLedgers(); // ✅ Fetch customer details before navigating
+
+                    if (filteredCustomers.isNotEmpty) {
+                      // ✅ Extract individual properties into separate lists
+                      List<String> names =
+                          filteredCustomers
+                              .map((c) => (c['customername'] ?? '').toString())
+                              .toList();
+                      List<String> phoneNos =
+                          filteredCustomers
+                              .map((c) => (c['mobileno'] ?? '').toString())
+                              .toList();
+                      List<String> addresses =
+                          filteredCustomers
+                              .map((c) => (c['address'] ?? '').toString())
+                              .toList();
+                      List<String> ids =
+                          filteredCustomers
+                              .map((c) => (c['id'] ?? '').toString())
+                              .toList();
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => Orderlistview(
+                                name: names.toString(),
+                                phoneNo: phoneNos.toString(),
+                                address: addresses.toString(),
+                                id: ids.toString(),
+                              ),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('No customer data available'),
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('View List'),
+                ),
+              ],
             ),
+
             const SizedBox(height: 20),
             Expanded(
               child:
@@ -134,41 +214,46 @@ class _CustomerSearchPageState extends State<CustomerSearchPage> {
                           style: TextStyle(fontSize: 16, color: Colors.grey),
                         ),
                       )
-                      : ListView.builder(
-                        itemCount: filteredCustomers.length,
-                        itemBuilder: (context, index) {
-                          final customer = filteredCustomers[index];
-                          return ListTile(
-                            title: Text(customer['customername'] ?? 'Unknown'),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text("Phone: ${customer['mobileno'] ?? 'N/A'}"),
-                                Text(
-                                  "GSTIN: ${customer['gstin'] ?? 'N/A'}",
-                                  style: TextStyle(color: Colors.grey),
+                      : Expanded(
+                        child: ListView.builder(
+                          itemCount: filteredCustomers.length,
+                          itemBuilder: (context, index) {
+                            final customer = filteredCustomers[index];
+                            return ListTile(
+                              title: Text(
+                                customer['customername'] ?? 'Unknown',
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Phone: ${customer['mobileno'] ?? 'N/A'}",
+                                  ),
+                                  Text(
+                                    "GSTIN: ${customer['gstin'] ?? 'N/A'}",
+                                    style: const TextStyle(color: Colors.grey),
+                                  ),
+                                ],
+                              ),
+                              trailing: ElevatedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    selectedCustomer =
+                                        customer; // Store selected customer
+                                  });
+                                  navigateToOrderPage(customer);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
                                 ),
-                              ],
-                            ),
-                            trailing: ElevatedButton(
-                              onPressed: () {
-                                navigateToOrderPage(
-                                  customer['customername'] ?? '',
-                                  customer['mobileno'] ?? '',
-                                  customer['address'] ?? '',
-                                  customer['id'] ?? '',
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
+                                child: const Text(
+                                  "Select",
+                                  style: TextStyle(color: Colors.white),
+                                ),
                               ),
-                              child: const Text(
-                                "Select",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
                       ),
             ),
           ],

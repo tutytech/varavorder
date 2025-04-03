@@ -7,13 +7,13 @@ import 'package:orderapp/customersearchform.dart';
 import 'package:orderapp/orderpage.dart';
 import 'package:orderapp/widgets/customnavigation.dart';
 
-class Orderlist extends StatefulWidget {
+class Orderlistview extends StatefulWidget {
   final String? name, id;
   final String? phoneNo;
   final String? address;
   final List<Map<String, dynamic>>? customers;
 
-  Orderlist({
+  Orderlistview({
     Key? key,
     this.customers,
     this.id,
@@ -26,7 +26,7 @@ class Orderlist extends StatefulWidget {
   _BranchListPageState createState() => _BranchListPageState();
 }
 
-class _BranchListPageState extends State<Orderlist> {
+class _BranchListPageState extends State<Orderlistview> {
   late Future<List<Map<String, dynamic>>> _branchListFuture;
   List<Map<String, dynamic>> _allBranches = [];
   List<Map<String, dynamic>> _filteredBranches = [];
@@ -147,48 +147,7 @@ class _BranchListPageState extends State<Orderlist> {
                     ),
                   ),
                   const SizedBox(height: 10.0),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (context) => OrderPage(
-                                    name: widget.name!,
-                                    phoneNo: widget.phoneNo!,
-                                    address: widget.address!,
-                                    id: widget.id!,
-                                  ),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Colors.red, // Button background color
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24.0,
-                            vertical: 12.0,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              8.0,
-                            ), // Rounded corners
-                          ),
-                        ),
-                        child: const Text(
-                          'Add Orders',
-                          style: TextStyle(
-                            fontSize: 16.0,
-                            color: Colors.white,
-                          ), // Text styling
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10.0),
+
                   // Fetched data container
                   Container(
                     decoration: BoxDecoration(
@@ -362,16 +321,21 @@ class _BranchListPageState extends State<Orderlist> {
                                               print('Cancel button pressed');
                                             },
                                             style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.red,
-                                              foregroundColor: Colors.white,
+                                              backgroundColor:
+                                                  Colors
+                                                      .red, // ✅ Red background
+                                              foregroundColor:
+                                                  Colors.white, // ✅ White text
                                               padding:
                                                   const EdgeInsets.symmetric(
                                                     horizontal: 16,
                                                     vertical: 8,
-                                                  ),
+                                                  ), // ✅ Padding
                                               shape: RoundedRectangleBorder(
                                                 borderRadius:
-                                                    BorderRadius.circular(8),
+                                                    BorderRadius.circular(
+                                                      8,
+                                                    ), // ✅ Rounded corners
                                               ),
                                             ),
                                             child: const Text(
@@ -379,7 +343,7 @@ class _BranchListPageState extends State<Orderlist> {
                                               style: TextStyle(
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.bold,
-                                              ),
+                                              ), // ✅ Bold text
                                             ),
                                           ),
                                         ),
