@@ -156,7 +156,7 @@ class _FoodGoHomeState extends State<FoodGoHome> {
                 crossAxisCount: 2,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
-                childAspectRatio: 0.8,
+                childAspectRatio: 1, // Ensures square shape
                 children: [
                   _buildFoodCard('Total Order', totalOrders.toString()),
                   _buildFoodCard('Order Value', totalBillAmount.toString()),
@@ -198,43 +198,49 @@ class _FoodGoHomeState extends State<FoodGoHome> {
   }
 
   Widget _buildFoodCard(String name, String count) {
-    return Container(
-      width: 80, // Adjust width as needed
-      height: 50, // Adjust height as needed
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12), // Adjusted for a compact look
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: const Offset(1, 1),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center, // Center the content
-        children: [
-          Text(
-            count,
-            style: const TextStyle(
-              fontSize: 20, // Reduced font size
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
+    return SizedBox(
+      width: 60, // Reduced width
+      height: 50, // Reduced height
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1), // Light shadow
+              spreadRadius: 1, // Minimal spread
+              blurRadius: 6, // Soft blur effect
+              offset: const Offset(2, 2), // Slight bottom-right shadow
             ),
-          ),
-          const SizedBox(height: 4), // Reduced spacing
-          Text(
-            name,
-            style: const TextStyle(
-              fontSize: 12, // Adjusted text size
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
+          ],
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: Text(
+                  count,
+                  style: const TextStyle(
+                    fontSize: 35, // Kept the same
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
             ),
-            textAlign: TextAlign.center, // Center the text
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Text(
+                name,
+                style: const TextStyle(
+                  fontSize: 18, // Kept the same
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
