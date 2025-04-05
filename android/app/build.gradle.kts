@@ -8,7 +8,8 @@ plugins {
 android {
     namespace = "com.example.orderapp"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = null
+
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

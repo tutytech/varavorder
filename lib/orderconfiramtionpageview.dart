@@ -2,11 +2,13 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:orderapp/customersearchform.dart';
+import 'package:orderapp/orderlist.dart';
+import 'package:orderapp/orderlistview.dart';
 import 'package:orderapp/widgets/customnavigation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-class OrderConfirmation extends StatefulWidget {
+class OrderConfirmationview extends StatefulWidget {
   final String name, id;
   final String phoneNo;
   final String address;
@@ -22,7 +24,7 @@ class OrderConfirmation extends StatefulWidget {
       totaligst;
   final double gstRate;
 
-  const OrderConfirmation({
+  const OrderConfirmationview({
     Key? key,
     required this.id,
     required this.name,
@@ -45,109 +47,72 @@ class OrderConfirmation extends StatefulWidget {
   _OrderPageState createState() => _OrderPageState();
 }
 
-class _OrderPageState extends State<OrderConfirmation> {
-  Future<void> _createOrderConfirm() async {
-    print('Order Confirm API: Started');
-    final prefs = await SharedPreferences.getInstance();
-    final String? userId = prefs.getString('userId');
+class _OrderPageState extends State<OrderConfirmationview> {
+  double? gst;
+  double? rate;
+  double? productname;
+  double totalGst = 0.0;
+  double total = 0.0;
+  double billAmount = 0.0;
+  List<Map<String, dynamic>> orderDetails = [];
+  @override
+  void initState() {
+    super.initState();
+    fetchOrderDetails(widget.id);
+  }
 
-    final String apiUrl = 'https://varav.tutytech.in/orderconfirm.php';
+  Future<void> fetchOrderDetails(String orderId) async {
+    print('Fetching order details for Order ID: $orderId');
 
-    try {
-      print('Order Confirm API: Sending request to $apiUrl');
+    final response = await http.post(
+      Uri.parse('https://varav.tutytech.in/orderdet.php'),
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: {'type': 'fetch', 'orderid': orderId},
+    );
 
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
-          'type': 'insert',
-          'total': widget.billAmount.toString(),
-          'cgst': widget.totalcgst.toString(),
-          'sgst': widget.totalsgst.toString(),
-          'igst': widget.totaligst.toString(),
-          'billamount': widget.totalamount.toString(),
-          'cusid': widget.id,
-          'entryid': userId ?? '',
-        },
-      );
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
 
-      print('Order Confirm API Response: ${response.body}');
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      print('Decoded JSON: $data');
 
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body.trim());
-        print('Decoded response: $responseData');
-        print('Response Type: ${responseData.runtimeType}');
-
-        if (responseData is Map && responseData['id'] != null) {
-          String orderId = responseData['id'].toString();
-          print('Order Confirmed! Order ID: $orderId');
-
-          // Call second API
-          await _createOrderDetails(orderId);
-        } else {
-          _showSnackBar('Order ID not found in response.');
+      // Extract product details
+      if (data['products'] != null && data['products'] is List) {
+        orderDetails.clear();
+        for (var product in data['products']) {
+          totalGst = double.tryParse(product['gst'].toString()) ?? 0.0;
+          orderDetails.add({
+            'productname': product['productname'],
+            'rate': double.tryParse(product['rate'].toString()) ?? 0.0,
+            'gst': double.tryParse(product['gst'].toString()) ?? 0.0,
+            'qty': int.tryParse(product['qty'].toString()) ?? 0,
+          });
         }
+        print('Parsed Order Details: $orderDetails');
       } else {
-        _showSnackBar(
-          'Failed to create order. Status code: ${response.statusCode}',
-        );
+        print('No products found in response.');
       }
-    } catch (e) {
-      print('Error: $e');
-      _showSnackBar('An error occurred: $e');
-    }
-  }
 
-  Future<void> _createOrderDetails(String orderId) async {
-    print('Order Details API: Started');
-    final String apiUrl = 'https://varav.tutytech.in/orderdet.php';
+      // Extract total and billamount only
+      final summary = data['summary'];
+      if (summary != null && summary is Map<String, dynamic>) {
+        setState(() {
+          total = double.tryParse(summary['total'].toString()) ?? 0.0;
+          billAmount = double.tryParse(summary['billamount'].toString()) ?? 0.0;
+        });
 
-    if (widget.products.isEmpty) {
-      print('No products found');
-      _showSnackBar('No products found');
-      return;
-    }
-
-    try {
-      // Loop through each product and send its details
-      for (var product in widget.products) {
-        var productId = product['id'];
-
-        print('Sending Order Details for Product ID: $productId');
-
-        final response = await http.post(
-          Uri.parse(apiUrl),
-          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-          body: {
-            'type': 'insert',
-            'productid': productId.toString(),
-            'orderid': orderId.toString(),
-            'rate': product['total'].toString(),
-            'gst': widget.totalgst.toString(),
-            'qty': product['qty'].toString(),
-          },
-        );
-
-        print(
-          'Order Details API Response for Product $productId: ${response.body}',
-        );
-
-        if (response.statusCode != 200) {
-          _showSnackBar(
-            'Failed to insert order details for product $productId',
-          );
-        }
+        print('Summary Details:');
+        print('Total: $total');
+        print('Bill Amount: $billAmount');
+      } else {
+        print('No summary data found.');
       }
-    } catch (e) {
-      print('Error inserting order details: $e');
-      _showSnackBar('An error occurred while inserting order details: $e');
+    } else {
+      print(
+        'Failed to fetch order details. Status code: ${response.statusCode}',
+      );
     }
-  }
-
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -193,18 +158,21 @@ class _OrderPageState extends State<OrderConfirmation> {
               const SizedBox(height: 20),
 
               // Product Details
-              const Text(
+              Text(
                 "Products Selected:",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
+
+              // Show order details
               Column(
                 children:
-                    widget.products.map((product) {
+                    orderDetails.map((product) {
                       return _buildProductItem(
-                        product['name'],
+                        product['productname'], // instead of product['name']
                         product['qty'],
-                        product['total'],
+                        (product['rate'] *
+                            product['qty']), // calculate total if not already available
                       );
                     }).toList(),
               ),
@@ -217,13 +185,10 @@ class _OrderPageState extends State<OrderConfirmation> {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
-              _buildBillDetail("Subtotal", widget.billAmount),
-              _buildBillDetail("GST", widget.totalgst),
-              _buildBillDetail(
-                "Total Amount",
-                widget.totalamount,
-                isTotal: true,
-              ),
+
+              _buildBillDetail("Subtotal", total),
+              _buildBillDetail("GST", totalGst),
+              _buildBillDetail("Total Amount", billAmount, isTotal: true),
 
               const SizedBox(height: 30),
 
@@ -240,10 +205,13 @@ class _OrderPageState extends State<OrderConfirmation> {
                       ),
                     ),
                     onPressed: () {
-                      _createOrderConfirm();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => Orderlist()),
+                      );
                     },
                     child: const Text(
-                      "Confirm Order",
+                      "Close",
                       style: TextStyle(fontSize: 18, color: Colors.white),
                     ),
                   ),

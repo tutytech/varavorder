@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:orderapp/homepage.dart';
 import 'package:orderapp/ledgerform.dart';
+import 'package:orderapp/orderreportview.dart';
+import 'package:orderapp/productlist.dart';
 import 'package:orderapp/products.dart';
 import 'package:orderapp/reportform.dart';
 
@@ -39,7 +41,7 @@ class CustomBottomNavBar extends StatelessWidget {
                   () => {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => products()),
+                      MaterialPageRoute(builder: (context) => productlist()),
                     ),
                   },
             ),
@@ -62,7 +64,9 @@ class CustomBottomNavBar extends StatelessWidget {
                   () => {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => Report()),
+                      MaterialPageRoute(
+                        builder: (context) => Orderreportview(),
+                      ),
                     ),
                   },
             ),

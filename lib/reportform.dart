@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:orderapp/customersearchform.dart';
+import 'package:orderapp/orderreportview.dart';
 import 'dart:convert';
 
 import 'package:orderapp/widgets/customappbar.dart';
@@ -40,6 +41,7 @@ class _CreateBranchState extends State<Report> {
   String? selectedRights;
   String? selectedBranchName;
   String? _staffId;
+  List<Map<String, dynamic>> orders = [];
   // @override
   // void didChangeDependencies() {
   //   super.didChangeDependencies();
@@ -177,6 +179,60 @@ class _CreateBranchState extends State<Report> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  Future<void> fetchOrdersByDate(BuildContext context) async {
+    if (fromDateController.text.isEmpty || toDateController.text.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select both dates')));
+      return;
+    }
+
+    String fromDate = fromDateController.text;
+    String toDate = toDateController.text;
+
+    var url = Uri.parse('https://varav.tutytech.in/orderconfirm.php');
+    try {
+      var response = await http.post(
+        url,
+        body: {
+          "type": "select_by_date",
+          "fromDate": fromDate,
+          "toDate": toDate,
+        },
+      );
+
+      // Print response body to the terminal
+      print("Response Status Code: ${response.statusCode}");
+      print("Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        var responseData = jsonDecode(response.body);
+        if (responseData['error'] == null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => Orderreportview(orders: responseData['data']),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(responseData['error'])));
+        }
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Failed to fetch data')));
+      }
+    } catch (e) {
+      print("Error: $e"); // Print error to terminal
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -311,7 +367,18 @@ class _CreateBranchState extends State<Report> {
                               return;
                             }
 
-                            // Handle Save Logic Here
+                            // Navigate to OrderReportView and pass dates
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => Orderreportview(
+                                      fromDate: fromDateController.text,
+                                      toDate: toDateController.text,
+                                    ),
+                              ),
+                            );
+
                             print("From Date: ${fromDateController.text}");
                             print("To Date: ${toDateController.text}");
                           },
