@@ -75,14 +75,14 @@ class _OrderPageState extends State<OrderConfirmation> {
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body.trim());
-        print('Decoded response: $responseData');
-        print('Response Type: ${responseData.runtimeType}');
 
-        if (responseData is Map && responseData['id'] != null) {
-          String orderId = responseData['id'].toString();
+        if (responseData is List &&
+            responseData.isNotEmpty &&
+            responseData[0]['id'] != null) {
+          String orderId = responseData[0]['id'].toString();
           print('Order Confirmed! Order ID: $orderId');
 
-          // Call second API
+          // Call second API after getting order ID
           await _createOrderDetails(orderId);
         } else {
           _showSnackBar('Order ID not found in response.');
@@ -124,7 +124,6 @@ class _OrderPageState extends State<OrderConfirmation> {
             'orderid': orderId.toString(),
             'rate': product['total'].toString(),
             'gst': widget.totalgst.toString(),
-            'qty': product['qty'].toString(),
           },
         );
 

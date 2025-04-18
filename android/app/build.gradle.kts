@@ -10,6 +10,8 @@ android {
     compileSdk = 35
    
 
+    compileSdk = 21
+    ndkVersion = 34
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

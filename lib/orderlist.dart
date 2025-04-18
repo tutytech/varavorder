@@ -4,7 +4,6 @@ import 'dart:convert';
 
 import 'package:orderapp/createledger.dart';
 import 'package:orderapp/customersearchform.dart';
-import 'package:orderapp/orderconfiramtionpageview.dart';
 import 'package:orderapp/orderpage.dart';
 import 'package:orderapp/widgets/customnavigation.dart';
 
@@ -276,18 +275,6 @@ class _BranchListPageState extends State<Orderlist> {
                                 ),
                                 DataColumn(
                                   label: Text(
-                                    'Order No',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color:
-                                          Colors
-                                              .white, // Blue color to match gradient theme
-                                    ),
-                                  ),
-                                ),
-                                DataColumn(
-                                  label: Text(
                                     'Order Date',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
@@ -300,7 +287,27 @@ class _BranchListPageState extends State<Orderlist> {
                                 ),
                                 DataColumn(
                                   label: Text(
-                                    'Customer Name',
+                                    'CusId',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                DataColumn(
+                                  label: Text(
+                                    'Total',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                DataColumn(
+                                  label: Text(
+                                    'CGST',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
@@ -309,6 +316,26 @@ class _BranchListPageState extends State<Orderlist> {
                                   ),
                                 ),
 
+                                DataColumn(
+                                  label: Text(
+                                    'SGST',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                DataColumn(
+                                  label: Text(
+                                    'IGST',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
                                 DataColumn(
                                   label: Text(
                                     'BillAmount',
@@ -336,195 +363,65 @@ class _BranchListPageState extends State<Orderlist> {
                                       cells: [
                                         DataCell(Text(branch['id'] ?? 'N/A')),
                                         DataCell(
-                                          Text(branch['orderno'] ?? '0'),
-                                        ),
-                                        DataCell(
                                           Text(branch['orderdate'] ?? '0'),
                                         ),
                                         DataCell(
-                                          Text(branch['customername'] ?? 'N/A'),
+                                          Text(branch['cusid'] ?? 'N/A'),
                                         ),
-
+                                        DataCell(
+                                          Text(branch['total'] ?? 'N/A'),
+                                        ),
+                                        DataCell(Text(branch['cgst'] ?? 'N/A')),
+                                        DataCell(Text(branch['sgst'] ?? 'N/A')),
+                                        DataCell(Text(branch['igst'] ?? 'N/A')),
                                         DataCell(
                                           Text(branch['billamount'] ?? 'N/A'),
                                         ),
 
                                         DataCell(
-                                          Row(
-                                            children: [
-                                              ElevatedButton(
-                                                onPressed: () async {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder:
-                                                          (
-                                                            context,
-                                                          ) => OrderConfirmationview(
-                                                            id:
-                                                                branch['id']
-                                                                    .toString(),
-                                                            name:
-                                                                widget.name
-                                                                    .toString(),
-                                                            phoneNo:
-                                                                widget.phoneNo
-                                                                    .toString(),
-                                                            address:
-                                                                widget.address
-                                                                    .toString(),
-                                                            products:
-                                                                [], // You can pass actual product list if available
-                                                            price:
-                                                                double.tryParse(
-                                                                  branch['price']
-                                                                          ?.toString() ??
-                                                                      '0',
-                                                                ) ??
-                                                                0.0,
-                                                            qty:
-                                                                int.tryParse(
-                                                                  branch['qty']
-                                                                          ?.toString() ??
-                                                                      '0',
-                                                                ) ??
-                                                                0,
-                                                            total:
-                                                                double.tryParse(
-                                                                  branch['total']
-                                                                          ?.toString() ??
-                                                                      '0',
-                                                                ) ??
-                                                                0.0,
-                                                            billAmount:
-                                                                double.tryParse(
-                                                                  branch['billamount']
-                                                                          ?.toString() ??
-                                                                      '0',
-                                                                ) ??
-                                                                0.0,
-                                                            gstRate:
-                                                                double.tryParse(
-                                                                  branch['gst']
-                                                                          ?.toString() ??
-                                                                      '0',
-                                                                ) ??
-                                                                0.0,
-                                                            totalcgst:
-                                                                double.tryParse(
-                                                                  branch['cgst']
-                                                                          ?.toString() ??
-                                                                      '0',
-                                                                ) ??
-                                                                0.0,
-                                                            totalsgst:
-                                                                double.tryParse(
-                                                                  branch['sgst']
-                                                                          ?.toString() ??
-                                                                      '0',
-                                                                ) ??
-                                                                0.0,
-                                                            totaligst:
-                                                                double.tryParse(
-                                                                  branch['igst']
-                                                                          ?.toString() ??
-                                                                      '0',
-                                                                ) ??
-                                                                0.0,
-                                                            totalgst:
-                                                                double.tryParse(
-                                                                  branch['gstamount']
-                                                                          ?.toString() ??
-                                                                      '0',
-                                                                ) ??
-                                                                0.0,
-                                                            totalamount:
-                                                                double.tryParse(
-                                                                  branch['grandtotal']
-                                                                          ?.toString() ??
-                                                                      '0',
-                                                                ) ??
-                                                                0.0,
-                                                          ),
-                                                    ),
+                                          ElevatedButton(
+                                            onPressed: () async {
+                                              int orderId =
+                                                  int.tryParse(
+                                                    branch['id'].toString(),
+                                                  ) ??
+                                                  0;
+                                              if (orderId != 0) {
+                                                bool success =
+                                                    await cancelOrder(orderId);
+                                                if (success) {
+                                                  print(
+                                                    'Order $orderId canceled successfully',
                                                   );
-                                                },
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Colors.red,
-                                                  foregroundColor: Colors.white,
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 16,
-                                                        vertical: 8,
-                                                      ),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          8,
-                                                        ),
+                                                } else {
+                                                  print(
+                                                    'Failed to cancel order $orderId',
+                                                  );
+                                                }
+                                              } else {
+                                                print('Invalid Order ID');
+                                              }
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.red,
+                                              foregroundColor: Colors.white,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                    vertical: 8,
                                                   ),
-                                                ),
-                                                child: const Text(
-                                                  'View',
-                                                  style: TextStyle(
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
                                               ),
-
-                                              // ✅ Add space between buttons
-                                              const SizedBox(width: 12),
-
-                                              ElevatedButton(
-                                                onPressed: () async {
-                                                  int orderId =
-                                                      int.tryParse(
-                                                        branch['id'].toString(),
-                                                      ) ??
-                                                      0;
-                                                  if (orderId != 0) {
-                                                    bool success =
-                                                        await cancelOrder(
-                                                          orderId,
-                                                        );
-                                                    if (success) {
-                                                      print(
-                                                        'Order $orderId canceled successfully',
-                                                      );
-                                                    } else {
-                                                      print(
-                                                        'Failed to cancel order $orderId',
-                                                      );
-                                                    }
-                                                  } else {
-                                                    print('Invalid Order ID');
-                                                  }
-                                                },
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Colors.red,
-                                                  foregroundColor: Colors.white,
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 16,
-                                                        vertical: 8,
-                                                      ),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          8,
-                                                        ),
-                                                  ),
-                                                ),
-                                                child: const Text(
-                                                  'Cancel',
-                                                  style: TextStyle(
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
+                                            ),
+                                            child: const Text(
+                                              'Cancel',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
                                               ),
-                                            ],
+                                            ),
                                           ),
                                         ),
                                       ],
