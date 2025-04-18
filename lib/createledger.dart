@@ -342,3 +342,41 @@ class _CreateBranchState extends State<CreateLedger> {
     );
   }
 }
+
+// Custom TextField with Box Shadow
+Widget _buildTextField({
+  required TextEditingController controller,
+  required String label,
+  TextInputType keyboardType = TextInputType.text,
+  required String? Function(String?) validator,
+}) {
+  return Container(
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(10),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black12,
+          blurRadius: 6,
+          spreadRadius: 1,
+          offset: const Offset(0, 2),
+        ),
+      ],
+    ),
+    child: TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.black),
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide.none,
+        ),
+      ),
+      validator: validator,
+    ),
+  );
+}
