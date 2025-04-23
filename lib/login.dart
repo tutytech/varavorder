@@ -181,81 +181,163 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
-  Future<void> _login() async {
-    final String email = _emailController.text.trim();
-    final String password = _passwordController.text.trim();
+Future<void> _login() async {
+  final String email = _emailController.text.trim();
+  final String password = _passwordController.text.trim();
 
-    final String url = "https://varav.tutytech.in/user.php";
-
-    try {
-      final response = await http.post(
-        Uri.parse(url),
-        body: {
-          "type": "login", // Add this if your API needs it
-          "username": email,
-          "password": password,
-        },
-        headers: {"Content-Type": "application/x-www-form-urlencoded"},
-      );
-
-      print('Login Response Status Code: ${response.statusCode}');
-      print(
-        'Login Response Body: ${response.body.isEmpty ? "EMPTY RESPONSE" : response.body}',
-      );
-
-      if (response.statusCode == 200) {
-        if (response.body.isEmpty) {
-          print("Error: API returned an empty response.");
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Login failed. Server returned an empty response."),
+  if (email.isEmpty || password.isEmpty) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Missing Fields"),
+        content: const Text("Please enter both email and password."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
             ),
-          );
-          return;
-        }
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+    return;
+  }
 
-        final List<dynamic> responseData = jsonDecode(response.body);
+  final String url = "https://varav.tutytech.in/user.php";
 
-        if (responseData.isNotEmpty &&
-            responseData[0] is Map<String, dynamic> &&
-            responseData[0].containsKey("id")) {
-          String userId = responseData[0]["id"].toString();
-          String companyId =
-              responseData[0]["companyid"].toString(); // <-- Extract companyid
+  try {
+    final response = await http.post(
+      Uri.parse(url),
+      body: {
+        "type": "login",
+        "username": email,
+        "password": password,
+      },
+      headers: {"Content-Type": "application/x-www-form-urlencoded"},
+    );
 
-          // Save user ID and company ID to SharedPreferences
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString("userId", userId);
-          await prefs.setString("companyid", companyId); // <-- Save companyid
-          print("User ID saved to SharedPreferences: $userId");
-          print("Company ID saved to SharedPreferences: $companyId");
+    print('Login Response Status Code: ${response.statusCode}');
+    print('Login Response Body: ${response.body.isEmpty ? "EMPTY RESPONSE" : response.body}');
 
-          // Navigate to the home screen
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => FoodGoHome()),
-          );
-          print('Login Successfully');
-        } else {
-          print("User ID not found in response.");
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Login failed. Invalid response format."),
-            ),
-          );
-        }
+    if (response.statusCode == 200) {
+      if (response.body.isEmpty) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Server Error"),
+            content: const Text("Login failed. Server returned an empty response."),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text("OK"),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+
+      final List<dynamic> responseData = jsonDecode(response.body);
+
+      if (responseData.isNotEmpty &&
+          responseData[0] is Map<String, dynamic> &&
+          responseData[0]["id"] != null) {
+        String userId = responseData[0]["id"].toString();
+        String companyId = responseData[0]["companyid"].toString();
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString("userId", userId);
+        await prefs.setString("companyid", companyId);
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => FoodGoHome()),
+        );
+        print('Login Successfully');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Login failed. Please try again.")),
+        // Show dialog with Register button
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Login Failed"),
+            content: const Text("Username and password do not exist. Please register."),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close dialog
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => CreateAccountScreen()), // Replace with your register page
+                  );
+                },
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text("Register"),
+              ),
+            ],
+          ),
         );
       }
-    } catch (e) {
-      print('Login Error: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("An error occurred: $e")));
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Error"),
+          content: const Text("Login failed. Please try again."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
     }
+  } catch (e) {
+    print('Login Error: $e');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Exception"),
+        content: Text("An error occurred: $e"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
   }
+}
+
+
+
 
   @override
   Widget build(BuildContext context) {

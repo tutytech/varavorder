@@ -1,0 +1,1 @@
+ D:\\varavorderappfinal\\varavorder\\.dart_tool\\flutter_build\\5b66bb807fbb63d2b017e1b1266f97f1\\native_assets.json: 
