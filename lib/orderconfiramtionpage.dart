@@ -46,57 +46,59 @@ class OrderConfirmation extends StatefulWidget {
 }
 
 class _OrderPageState extends State<OrderConfirmation> {
-  Future<void> _createOrderConfirm() async {
-    print('Order Confirm API: Started');
-    final prefs = await SharedPreferences.getInstance();
-    final String? userId = prefs.getString('userId');
+Future<void> _createOrderConfirm() async {
+  print('Order Confirm API: Started');
+  final prefs = await SharedPreferences.getInstance();
+  final String? userId = prefs.getString('userId');
 
-    final String apiUrl = 'https://varav.tutytech.in/orderconfirm.php';
+  final String apiUrl = 'https://varav.tutytech.in/orderconfirm.php';
 
-    try {
-      print('Order Confirm API: Sending request to $apiUrl');
+  try {
+    print('Order Confirm API: Sending request to $apiUrl');
 
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
-          'type': 'insert',
-          'total': widget.billAmount.toString(),
-          'cgst': widget.totalcgst.toString(),
-          'sgst': widget.totalsgst.toString(),
-          'igst': widget.totaligst.toString(),
-          'billamount': widget.totalamount.toString(),
-          'cusid': widget.id,
-          'entryid': userId ?? '',
-        },
-      );
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: {
+        'type': 'insert',
+        'total': widget.billAmount.toString(),
+        'cgst': widget.totalcgst.toString(),
+        'sgst': widget.totalsgst.toString(),
+        'igst': widget.totaligst.toString(),
+        'billamount': widget.totalamount.toString(),
+        'cusid': widget.id,
+        'entryid': userId ?? '',
+      },
+    );
 
-      print('Order Confirm API Response: ${response.body}');
+    print('Order Confirm API Response: ${response.body}');
 
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body.trim());
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body.trim());
 
-        if (responseData is List &&
-            responseData.isNotEmpty &&
-            responseData[0]['id'] != null) {
-          String orderId = responseData[0]['id'].toString();
-          print('Order Confirmed! Order ID: $orderId');
+      String? orderId;
 
-          // Call second API after getting order ID
-          await _createOrderDetails(orderId);
-        } else {
-          _showSnackBar('Order ID not found in response.');
-        }
-      } else {
-        _showSnackBar(
-          'Failed to create order. Status code: ${response.statusCode}',
-        );
+      if (responseData is List && responseData.isNotEmpty && responseData[0]['id'] != null) {
+        orderId = responseData[0]['id'].toString();
+      } else if (responseData is Map<String, dynamic> && responseData.containsKey('id')) {
+        orderId = responseData['id'].toString();
       }
-    } catch (e) {
-      print('Error: $e');
-      _showSnackBar('An error occurred: $e');
+
+      if (orderId != null) {
+        print('Order Confirmed! Order ID: $orderId');
+        await _createOrderDetails(orderId); // Proceed with order details API
+      } else {
+        _showSnackBar('Order ID not found in response.');
+      }
+    } else {
+      _showSnackBar('Failed to create order. Status code: ${response.statusCode}');
     }
+  } catch (e) {
+    print('Error: $e');
+    _showSnackBar('An error occurred: $e');
   }
+}
+
 
   Future<void> _createOrderDetails(String orderId) async {
     print('Order Details API: Started');
@@ -110,33 +112,34 @@ class _OrderPageState extends State<OrderConfirmation> {
 
     try {
       // Loop through each product and send its details
-      for (var product in widget.products) {
-        var productId = product['id'];
+     for (var product in widget.products) {
+  var productId = product['id'];
+  var qty = product['qty'];
+  var rate = product['total'];
 
-        print('Sending Order Details for Product ID: $productId');
+  print('Sending Order Details for Product ID: $productId');
 
-        final response = await http.post(
-          Uri.parse(apiUrl),
-          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-          body: {
-            'type': 'insert',
-            'productid': productId.toString(),
-            'orderid': orderId.toString(),
-            'rate': product['total'].toString(),
-            'gst': widget.totalgst.toString(),
-          },
-        );
+  final response = await http.post(
+    Uri.parse(apiUrl),
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: {
+      'type': 'insert',
+      'productid': productId.toString(),
+      'orderid': orderId,
+      'rate': rate.toString(),
+      'gst': widget.totalgst.toString(), // or product['gst']
+      'qty': qty.toString(),
+    },
+  );
 
-        print(
-          'Order Details API Response for Product $productId: ${response.body}',
-        );
+  final responseData = json.decode(response.body);
+  print('Order Details API Response for Product $productId: ${response.body}');
 
-        if (response.statusCode != 200) {
-          _showSnackBar(
-            'Failed to insert order details for product $productId',
-          );
-        }
-      }
+  if (response.statusCode != 200 || responseData['success'] != true) {
+    _showSnackBar('Failed to insert order details for product $productId');
+  }
+}
+
     } catch (e) {
       print('Error inserting order details: $e');
       _showSnackBar('An error occurred while inserting order details: $e');

@@ -34,12 +34,17 @@ class _OrderPageState extends State<OrderPage> {
   };
   List<String> productNames = [];
   List<Map<String, dynamic>> cartItems = [];
+ 
+
 
   List<Map<String, dynamic>> productList = [];
   double gstPer = 5.0;
   int quantity = 0; // Default quantity starts from 0
   Map<int, TextEditingController> controllers = {};
   List<Map<String, dynamic>> selectedProducts = [];
+  List<String> productGroups = [];
+String? selectedGroup;
+
 
   double numericPrice = 0;
   double totalPrice = 0;
@@ -55,86 +60,85 @@ class _OrderPageState extends State<OrderPage> {
     fetchProducts();
   }
 
-  Future<void> fetchProducts() async {
-    const String _baseUrl = 'https://varav.tutytech.in/product.php';
+ Future<void> fetchProducts() async {
+  const String _baseUrl = 'https://varav.tutytech.in/product.php';
 
-    try {
-      // Get companyId from SharedPreferences
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? companyId = prefs.getString('companyid');
+  try {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? companyId = prefs.getString('companyid');
 
-      if (companyId == null) {
-        print('companyId not found in SharedPreferences');
-        return;
-      }
-
-      final Map<String, String> requestBody = {
-        'type': 'select',
-        'companyid': companyId,
-      };
-
-      final response = await http.post(
-        Uri.parse(_baseUrl),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: requestBody,
-      );
-
-      if (response.statusCode == 200) {
-        if (response.body.isEmpty) {
-          throw Exception('Empty response from server');
-        }
-
-        final decodedResponse = json.decode(response.body);
-        print('Decoded Response: $decodedResponse');
-
-        if (decodedResponse is Map<String, dynamic> &&
-            decodedResponse.containsKey('data')) {
-          final List<dynamic> productData = decodedResponse['data'];
-
-          if (productData.isEmpty) {
-            throw Exception('No products found');
-          }
-
-          setState(() {
-            productList =
-                productData.map<Map<String, dynamic>>((product) {
-                  int productId = int.tryParse(product['id'].toString()) ?? 0;
-                  double gstRate =
-                      double.tryParse(product['gst'].toString()) ?? 0.0;
-
-                  controllers[productId] = TextEditingController(
-                    text: quantity.toString(),
-                  );
-
-                  return {
-                    'id': productId,
-                    'name': product['productname'].toString(),
-                    'price':
-                        double.tryParse(product['salesrate'].toString()) ?? 0.0,
-                    'qty': quantity,
-                    'unit': product['salesunit'].toString(),
-                    'mrp': double.tryParse(product['mrp'].toString()) ?? 0.0,
-                    'salesRate':
-                        double.tryParse(product['salesrate'].toString()) ?? 0.0,
-                    'purRate':
-                        double.tryParse(product['purchaserate'].toString()) ??
-                        0.0,
-                    'gst': gstRate,
-                  };
-                }).toList();
-          });
-        } else {
-          throw Exception('Invalid response format');
-        }
-      } else {
-        throw Exception(
-          'Failed to fetch products (HTTP ${response.statusCode})',
-        );
-      }
-    } catch (e) {
-      print('Error occurred: $e');
+    if (companyId == null) {
+      print('companyId not found in SharedPreferences');
+      return;
     }
+
+    final Map<String, String> requestBody = {
+      'type': 'select',
+      'companyid': companyId,
+    };
+
+    final response = await http.post(
+      Uri.parse(_baseUrl),
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: requestBody,
+    );
+
+    if (response.statusCode == 200) {
+      if (response.body.isEmpty) {
+        throw Exception('Empty response from server');
+      }
+
+      final decodedResponse = json.decode(response.body);
+      print('Decoded Response: $decodedResponse');
+
+      if (decodedResponse is Map<String, dynamic> &&
+          decodedResponse.containsKey('data')) {
+        final List<dynamic> productData = decodedResponse['data'];
+
+        if (productData.isEmpty) {
+          throw Exception('No products found');
+        }
+
+        setState(() {
+          // Populate productList
+          productList = productData.map<Map<String, dynamic>>((product) {
+            int productId = int.tryParse(product['id'].toString()) ?? 0;
+            double gstRate = double.tryParse(product['gst'].toString()) ?? 0.0;
+
+            controllers[productId] = TextEditingController(
+              text: quantity.toString(),
+            );
+
+            return {
+              'id': productId,
+              'name': product['productname'].toString(),
+              'group': product['group'].toString(),
+              'price': double.tryParse(product['salesrate'].toString()) ?? 0.0,
+              'qty': quantity,
+              'unit': product['salesunit'].toString(),
+              'mrp': double.tryParse(product['mrp'].toString()) ?? 0.0,
+              'salesRate': double.tryParse(product['salesrate'].toString()) ?? 0.0,
+              'purRate': double.tryParse(product['purchaserate'].toString()) ?? 0.0,
+              'gst': gstRate,
+            };
+          }).toList();
+
+          // Extract unique product groups
+          productGroups = productData
+              .map((product) => product['group'].toString())
+              .toSet()
+              .toList();
+        });
+      } else {
+        throw Exception('Invalid response format');
+      }
+    } else {
+      throw Exception('Failed to fetch products (HTTP ${response.statusCode})');
+    }
+  } catch (e) {
+    print('Error occurred: $e');
   }
+}
 
   double getGSTPercentage() {
     if (productList.isNotEmpty) {
@@ -270,23 +274,66 @@ class _OrderPageState extends State<OrderPage> {
               ),
               const SizedBox(height: 10),
 
-              // Product Items
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children:
-                    productList.map((product) {
-                      return productItem(
+         Column(
+  children: productGroups.map((group) {
+    final isSelected = selectedGroup == group;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4),
+          child: ElevatedButton(
+            onPressed: () {
+              setState(() {
+                selectedGroup = isSelected ? null : group;
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isSelected ? Colors.red : Colors.grey.shade300,
+              foregroundColor: isSelected ? Colors.white : Colors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              minimumSize: const Size.fromHeight(48),
+              alignment: Alignment.centerLeft,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text(
+              group,
+              style: const TextStyle(fontSize: 16),
+            ),
+          ),
+        ),
+
+        if (isSelected)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0),
+            child: Column(
+              children: productList
+                  .where((product) => product['group'] == selectedGroup)
+                  .map((product) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: productItem(
                         product['id'] as int,
                         product['name'] as String,
                         product['price'].toString(),
-
                         product['unit'] as String,
                         product['mrp'] as double,
                         product['salesRate'] as double,
                         product['purRate'] as double,
-                      );
-                    }).toList(),
-              ),
+                      ),
+                    );
+                  }).toList(),
+            ),
+          ),
+      ],
+    );
+  }).toList(),
+),
+
+
 
               const SizedBox(height: 20),
 

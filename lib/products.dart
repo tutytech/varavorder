@@ -28,6 +28,7 @@ class _CreateBranchState extends State<products> {
   final domController = TextEditingController();
   final TextEditingController productCodeController = TextEditingController();
   final TextEditingController productNameController = TextEditingController();
+   final TextEditingController groupController = TextEditingController();
   final TextEditingController qtyController = TextEditingController();
   final TextEditingController noOfKgsController = TextEditingController();
   final TextEditingController salesRateController = TextEditingController();
@@ -63,6 +64,10 @@ class _CreateBranchState extends State<products> {
         'productname':
             productNameController.text.isNotEmpty
                 ? productNameController.text
+                : "N/A",
+                 'group':
+            groupController.text.isNotEmpty
+                ?groupController.text
                 : "N/A",
         'purchaseunit': selectedPurchaseUnit ?? "N/A",
         'purchaseqty': qtyController.text.isNotEmpty ? qtyController.text : "0",
@@ -250,6 +255,17 @@ class _CreateBranchState extends State<products> {
                             ),
                           ),
                         ],
+                      ),
+                       const SizedBox(height: 16),
+
+                      // Sales Rate
+                      TextFormField(
+                        controller: groupController,
+                        decoration: const InputDecoration(
+                          labelText: "Group",
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.number,
                       ),
                       const SizedBox(height: 16),
 
