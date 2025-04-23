@@ -10,8 +10,8 @@ android {
     compileSdk = 35
    
 
-    compileSdk = 21
-    ndkVersion = 34
+    
+    
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -27,13 +27,8 @@ android {
         applicationId = "com.example.orderapp"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-<<<<<<< HEAD
         minSdk = 21
         targetSdk = 34
-=======
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
->>>>>>> 85f188424219437724f6a35c06ee6728251c48f0
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

@@ -4,6 +4,11 @@ import 'package:orderapp/ledgerform.dart';
 import 'package:orderapp/products.dart';
 import 'package:orderapp/reportform.dart';
 
+import '../homepage.dart';
+import '../ledgerform.dart';
+import '../orderreportview.dart';
+import '../productlist.dart';
+
 class CustomBottomNavBar extends StatelessWidget {
   final Function(int) onItemSelected;
 
@@ -39,7 +44,7 @@ class CustomBottomNavBar extends StatelessWidget {
                   () => {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => products()),
+                      MaterialPageRoute(builder: (context) => productlist()),
                     ),
                   },
             ),
@@ -62,7 +67,9 @@ class CustomBottomNavBar extends StatelessWidget {
                   () => {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => Report()),
+                      MaterialPageRoute(
+                        builder: (context) => Orderreportview(),
+                      ),
                     ),
                   },
             ),
