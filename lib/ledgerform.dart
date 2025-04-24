@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:orderapp/createledger.dart';
 import 'package:orderapp/customersearchform.dart';
+import 'package:orderapp/editledger.dart';
 import 'package:orderapp/widgets/customnavigation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -346,21 +347,23 @@ class _BranchListPageState extends State<Ledger> {
                                                 onPressed: () {
                                                   // Print the branch ID for debugging
                                                   print(
-                                                    'Branch ID: ${branch['id']}',
+                                                    'Branch ID: ${branch['id'].toString()}',
                                                   );
-                                                  // Navigator.push(
-                                                  //   context,
-                                                  //   MaterialPageRoute(
-                                                  //     builder:
-                                                  //         (
-                                                  //           context,
-                                                  //         ) => EditCustomer(
-                                                  //           id: branch['id'],
-                                                  //           rights:
-                                                  //               widget.rights,
-                                                  //         ),
-                                                  //   ),
-                                                  // );
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder:
+                                                          (
+                                                            context,
+                                                          ) => EditLedger(
+                                                            id:
+                                                                branch['id']
+                                                                    .toString(),
+                                                            rights:
+                                                                widget.rights,
+                                                          ),
+                                                    ),
+                                                  );
                                                 },
                                               ),
                                               IconButton(
