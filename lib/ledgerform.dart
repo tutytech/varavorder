@@ -40,6 +40,44 @@ class _BranchListPageState extends State<Ledger> {
     super.dispose();
   }
 
+  Future<void> deleteLedger(String branchId) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    final String? userId = prefs.getString('userId') ?? "";
+
+    const String apiUrl = 'https://varav.tutytech.in/ledgerform.php';
+
+    try {
+      // Send the POST request with form data
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: {'type': 'delete', 'id': branchId, 'entryid': userId},
+      );
+
+      // Print the response status and body for debugging
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      // Check if the response is successful (HTTP status 200)
+      if (response.statusCode == 200) {
+        // Parse the response body as JSON
+        final responseData = jsonDecode(response.body);
+
+        if (responseData.isNotEmpty && responseData[0]['status'] == 'success') {
+          print('Branch deleted successfully: ${responseData[0]['message']}');
+          // Optionally, fetch updated branches or perform other actions here
+        } else {
+          print('Failed to delete branch: ${responseData[0]['message']}');
+        }
+      } else {
+        print('Failed to delete branch. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error occurred: $e');
+    }
+  }
+
   Future<List<Map<String, dynamic>>> fetchLedgers() async {
     const String _baseUrl = 'https://varav.tutytech.in/ledgerform.php';
 
@@ -371,7 +409,10 @@ class _BranchListPageState extends State<Ledger> {
                                                   Icons.delete,
                                                   color: Colors.red,
                                                 ),
-                                                onPressed: () => {},
+                                                onPressed:
+                                                    () => deleteLedger(
+                                                      branch['id'].toString(),
+                                                    ),
                                               ),
                                             ],
                                           ),
