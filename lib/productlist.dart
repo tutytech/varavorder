@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:orderapp/createledger.dart';
 import 'package:orderapp/customersearchform.dart';
+import 'package:orderapp/editproduct.dart';
 import 'package:orderapp/products.dart';
 import 'package:orderapp/widgets/customnavigation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -109,6 +110,44 @@ class _BranchListPageState extends State<productlist> {
                 .toList();
       }
     });
+  }
+
+  Future<void> deleteProducts(String branchId) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    final String? userId = prefs.getString('userId') ?? "";
+
+    const String apiUrl = 'https://varav.tutytech.in/product.php';
+
+    try {
+      // Send the POST request with form data
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: {'type': 'delete', 'id': branchId, 'entryid': userId},
+      );
+
+      // Print the response status and body for debugging
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      // Check if the response is successful (HTTP status 200)
+      if (response.statusCode == 200) {
+        // Parse the response body as JSON
+        final responseData = jsonDecode(response.body);
+
+        if (responseData.isNotEmpty && responseData[0]['status'] == 'success') {
+          print('Branch deleted successfully: ${responseData[0]['message']}');
+          // Optionally, fetch updated branches or perform other actions here
+        } else {
+          print('Failed to delete branch: ${responseData[0]['message']}');
+        }
+      } else {
+        print('Failed to delete branch. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error occurred: $e');
+    }
   }
 
   @override
@@ -484,19 +523,19 @@ class _BranchListPageState extends State<productlist> {
                                                   print(
                                                     'Branch ID: ${branch['id']?.toString()}',
                                                   );
-                                                  // Navigator.push(
-                                                  //   context,
-                                                  //   MaterialPageRoute(
-                                                  //     builder:
-                                                  //         (
-                                                  //           context,
-                                                  //         ) => EditCustomer(
-                                                  //           id: branch['id'],
-                                                  //           rights:
-                                                  //               widget.rights,
-                                                  //         ),
-                                                  //   ),
-                                                  // );
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder:
+                                                          (
+                                                            context,
+                                                          ) => Editproducts(
+                                                            id:
+                                                                branch['id']
+                                                                    .toString(),
+                                                          ),
+                                                    ),
+                                                  );
                                                 },
                                               ),
                                               IconButton(
@@ -504,7 +543,12 @@ class _BranchListPageState extends State<productlist> {
                                                   Icons.delete,
                                                   color: Colors.red,
                                                 ),
-                                                onPressed: () => {},
+                                                onPressed:
+                                                    () => {
+                                                      deleteProducts(
+                                                        branch['id'].toString(),
+                                                      ),
+                                                    },
                                               ),
                                             ],
                                           ),
