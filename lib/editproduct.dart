@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:orderapp/customersearchform.dart';
+import 'package:orderapp/productlist.dart';
 import 'dart:convert';
 
 import 'package:orderapp/widgets/customappbar.dart';
@@ -145,78 +146,6 @@ class _CreateBranchState extends State<Editproducts> {
     selectedGstType = branch['gsttype'] ?? '';
   }
 
-  Future<void> _createProducts() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? userId = prefs.getString('userId') ?? "";
-    final String? companyId = prefs.getString('companyid') ?? "";
-
-    final String apiUrl = 'https://varav.tutytech.in/product.php';
-
-    try {
-      // Prepare request body and ensure all values are strings
-      Map<String, String> requestBody = {
-        'type': 'insert',
-        'productcode':
-            productCodeController.text.isNotEmpty
-                ? productCodeController.text
-                : "N/A",
-        'productname':
-            productNameController.text.isNotEmpty
-                ? productNameController.text
-                : "N/A",
-        'group': groupController.text.isNotEmpty ? groupController.text : "N/A",
-        'purchaseunit': selectedPurchaseUnit ?? "N/A",
-        'purchaseqty': qtyController.text.isNotEmpty ? qtyController.text : "0",
-        'salesunit': selectedSalesUnit ?? "N/A",
-        'salesqty':
-            noOfKgsController.text.isNotEmpty ? noOfKgsController.text : "0",
-        'salesrate':
-            salesRateController.text.isNotEmpty
-                ? salesRateController.text
-                : "0",
-        'wholesalerate':
-            wholeSaleRateController.text.isNotEmpty
-                ? wholeSaleRateController.text
-                : "0",
-        'purchaserate':
-            purchaseRateController.text.isNotEmpty
-                ? purchaseRateController.text
-                : "0",
-        'mrp': mrpController.text.isNotEmpty ? mrpController.text : "0",
-        'gst': gstController.text.isNotEmpty ? gstController.text : "0",
-        'gsttype': selectedGstType ?? "INCLUDE GST",
-        'entryid': userId.toString(),
-        'companyid': companyId.toString(),
-      };
-
-      // Debugging: Print request body
-      print('Request URL: $apiUrl');
-      print('Request body: $requestBody');
-
-      // Send request
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: requestBody,
-      );
-
-      // Debugging: Print response
-      print('Response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
-        print('Response Data: $responseData');
-      } else {
-        _showSnackBar(
-          'Failed to create product. Status code: ${response.statusCode}',
-        );
-      }
-    } catch (e) {
-      print('Error: $e');
-      _showSnackBar('An error occurred: $e');
-    }
-  }
-
   Future<void> _updateProducts() async {
     final String activeStatus = isActive == true ? 'Y' : 'N';
     print('---------------${widget.id}');
@@ -276,7 +205,11 @@ class _CreateBranchState extends State<Editproducts> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Products updated successfully!')),
           );
-          Navigator.pop(context, true); // Return to the previous screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => productlist()),
+          );
+          // Return to the previous screen
         } else {
           _showError(result[0]['message'] ?? 'Failed to update scheme.');
         }
@@ -541,7 +474,14 @@ class _CreateBranchState extends State<Editproducts> {
                             SizedBox(
                               width: 150,
                               child: ElevatedButton(
-                                onPressed: () {},
+                                onPressed: () {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => productlist(),
+                                    ),
+                                  );
+                                },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.red,
                                 ),

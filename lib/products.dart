@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:orderapp/customersearchform.dart';
+import 'package:orderapp/productlist.dart';
 import 'dart:convert';
 
 import 'package:orderapp/widgets/customappbar.dart';
@@ -28,7 +29,7 @@ class _CreateBranchState extends State<products> {
   final domController = TextEditingController();
   final TextEditingController productCodeController = TextEditingController();
   final TextEditingController productNameController = TextEditingController();
-   final TextEditingController groupController = TextEditingController();
+  final TextEditingController groupController = TextEditingController();
   final TextEditingController qtyController = TextEditingController();
   final TextEditingController noOfKgsController = TextEditingController();
   final TextEditingController salesRateController = TextEditingController();
@@ -65,10 +66,7 @@ class _CreateBranchState extends State<products> {
             productNameController.text.isNotEmpty
                 ? productNameController.text
                 : "N/A",
-                 'group':
-            groupController.text.isNotEmpty
-                ?groupController.text
-                : "N/A",
+        'group': groupController.text.isNotEmpty ? groupController.text : "N/A",
         'purchaseunit': selectedPurchaseUnit ?? "N/A",
         'purchaseqty': qtyController.text.isNotEmpty ? qtyController.text : "0",
         'salesunit': selectedSalesUnit ?? "N/A",
@@ -110,9 +108,17 @@ class _CreateBranchState extends State<products> {
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         print('Response Data: $responseData');
-      } else {
-        _showSnackBar(
-          'Failed to create product. Status code: ${response.statusCode}',
+
+        // Show success message
+        _showSnackBar('Product created successfully');
+
+        // Wait briefly for the snackbar to show
+        await Future.delayed(const Duration(seconds: 1));
+
+        // Navigate to ProductList page
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => productlist()),
         );
       }
     } catch (e) {
@@ -159,6 +165,11 @@ class _CreateBranchState extends State<products> {
                           labelText: "Product Code",
                           border: OutlineInputBorder(),
                         ),
+                        validator:
+                            (value) =>
+                                value == null || value.isEmpty
+                                    ? 'Enter product code'
+                                    : null,
                       ),
                       const SizedBox(height: 16),
 
@@ -169,6 +180,11 @@ class _CreateBranchState extends State<products> {
                           labelText: "Product Name",
                           border: OutlineInputBorder(),
                         ),
+                        validator:
+                            (value) =>
+                                value == null || value.isEmpty
+                                    ? 'Enter product name'
+                                    : null,
                       ),
                       const SizedBox(height: 16),
 
@@ -197,6 +213,11 @@ class _CreateBranchState extends State<products> {
                                   selectedPurchaseUnit = value;
                                 });
                               },
+                              validator:
+                                  (value) =>
+                                      value == null
+                                          ? 'Select purchase unit'
+                                          : null,
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -209,6 +230,11 @@ class _CreateBranchState extends State<products> {
                                 border: OutlineInputBorder(),
                               ),
                               keyboardType: TextInputType.number,
+                              validator:
+                                  (value) =>
+                                      value == null || value.isEmpty
+                                          ? 'Enter quantity'
+                                          : null,
                             ),
                           ),
                         ],
@@ -240,6 +266,11 @@ class _CreateBranchState extends State<products> {
                                   selectedSalesUnit = value;
                                 });
                               },
+                              validator:
+                                  (value) =>
+                                      value == null
+                                          ? 'Select sales unit'
+                                          : null,
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -252,24 +283,31 @@ class _CreateBranchState extends State<products> {
                                 border: OutlineInputBorder(),
                               ),
                               keyboardType: TextInputType.number,
+                              validator:
+                                  (value) =>
+                                      value == null || value.isEmpty
+                                          ? 'Enter No of KGS'
+                                          : null,
                             ),
                           ),
                         ],
                       ),
-                       const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                      // Sales Rate
                       TextFormField(
                         controller: groupController,
                         decoration: const InputDecoration(
                           labelText: "Group",
                           border: OutlineInputBorder(),
                         ),
-                        keyboardType: TextInputType.number,
+                        validator:
+                            (value) =>
+                                value == null || value.isEmpty
+                                    ? 'Enter group'
+                                    : null,
                       ),
                       const SizedBox(height: 16),
 
-                      // Sales Rate
                       TextFormField(
                         controller: salesRateController,
                         decoration: const InputDecoration(
@@ -277,6 +315,11 @@ class _CreateBranchState extends State<products> {
                           border: OutlineInputBorder(),
                         ),
                         keyboardType: TextInputType.number,
+                        validator:
+                            (value) =>
+                                value == null || value.isEmpty
+                                    ? 'Enter sales rate'
+                                    : null,
                       ),
                       const SizedBox(height: 16),
 
@@ -287,6 +330,11 @@ class _CreateBranchState extends State<products> {
                           border: OutlineInputBorder(),
                         ),
                         keyboardType: TextInputType.number,
+                        validator:
+                            (value) =>
+                                value == null || value.isEmpty
+                                    ? 'Enter wholesale rate'
+                                    : null,
                       ),
                       const SizedBox(height: 16),
 
@@ -297,6 +345,11 @@ class _CreateBranchState extends State<products> {
                           border: OutlineInputBorder(),
                         ),
                         keyboardType: TextInputType.number,
+                        validator:
+                            (value) =>
+                                value == null || value.isEmpty
+                                    ? 'Enter purchase rate'
+                                    : null,
                       ),
                       const SizedBox(height: 16),
 
@@ -307,6 +360,11 @@ class _CreateBranchState extends State<products> {
                           border: OutlineInputBorder(),
                         ),
                         keyboardType: TextInputType.number,
+                        validator:
+                            (value) =>
+                                value == null || value.isEmpty
+                                    ? 'Enter MRP'
+                                    : null,
                       ),
                       const SizedBox(height: 16),
 
@@ -317,10 +375,14 @@ class _CreateBranchState extends State<products> {
                           border: OutlineInputBorder(),
                         ),
                         keyboardType: TextInputType.number,
+                        validator:
+                            (value) =>
+                                value == null || value.isEmpty
+                                    ? 'Enter GST %'
+                                    : null,
                       ),
                       const SizedBox(height: 16),
 
-                      // GST Type Dropdown
                       DropdownButtonFormField<String>(
                         decoration: const InputDecoration(
                           labelText: "GST Type",
@@ -341,10 +403,11 @@ class _CreateBranchState extends State<products> {
                             selectedGstType = value;
                           });
                         },
+                        validator:
+                            (value) => value == null ? 'Select GST type' : null,
                       ),
                       const SizedBox(height: 16),
 
-                      // Quantity Inputs
                       const SizedBox(height: 30),
                       SizedBox(
                         height: 50,
@@ -375,7 +438,14 @@ class _CreateBranchState extends State<products> {
                             SizedBox(
                               width: 150,
                               child: ElevatedButton(
-                                onPressed: () {},
+                                onPressed: () {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => productlist(),
+                                    ),
+                                  );
+                                },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.red,
                                 ),

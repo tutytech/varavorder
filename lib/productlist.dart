@@ -112,41 +112,52 @@ class _BranchListPageState extends State<productlist> {
     });
   }
 
-  Future<void> deleteProducts(String branchId) async {
+  Future<void> deleteProducts(BuildContext context, String branchId) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    final String? userId = prefs.getString('userId') ?? "";
+    final String userId = prefs.getString('userId') ?? "";
 
     const String apiUrl = 'https://varav.tutytech.in/product.php';
 
     try {
-      // Send the POST request with form data
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {'type': 'delete', 'id': branchId, 'entryid': userId},
       );
 
-      // Print the response status and body for debugging
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
 
-      // Check if the response is successful (HTTP status 200)
       if (response.statusCode == 200) {
-        // Parse the response body as JSON
         final responseData = jsonDecode(response.body);
 
         if (responseData.isNotEmpty && responseData[0]['status'] == 'success') {
-          print('Branch deleted successfully: ${responseData[0]['message']}');
-          // Optionally, fetch updated branches or perform other actions here
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(responseData[0]['message'])));
+
+          // ✅ Refresh the list after deletion
+          setState(() {
+            _branchListFuture = fetchProducts();
+          });
         } else {
-          print('Failed to delete branch: ${responseData[0]['message']}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                responseData[0]['message'] ?? 'Failed to delete product.',
+              ),
+            ),
+          );
         }
       } else {
-        print('Failed to delete branch. Status code: ${response.statusCode}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Server error: ${response.statusCode}')),
+        );
       }
     } catch (e) {
-      print('Error occurred: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error occurred: $e')));
     }
   }
 
@@ -546,6 +557,7 @@ class _BranchListPageState extends State<productlist> {
                                                 onPressed:
                                                     () => {
                                                       deleteProducts(
+                                                        context,
                                                         branch['id'].toString(),
                                                       ),
                                                     },

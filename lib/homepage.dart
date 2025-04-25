@@ -17,7 +17,7 @@ class _FoodGoHomeState extends State<FoodGoHome> {
   int totalCustomerCount = 0;
   int totalProducts = 0;
   int totalOrders = 0;
-  int totalBillAmount = 0;
+  double totalBillAmount = 0;
   @override
   void initState() {
     super.initState();
@@ -203,7 +203,11 @@ class _FoodGoHomeState extends State<FoodGoHome> {
                 childAspectRatio: 1, // Ensures square shape
                 children: [
                   _buildFoodCard('Total Order', totalOrders.toString()),
-                  _buildFoodCard('Order Value', totalBillAmount.toString()),
+                  _buildFoodCard(
+                    'Order Value',
+                    totalBillAmount.toStringAsFixed(2),
+                  ),
+
                   _buildFoodCard(
                     'Total Customer',
                     totalCustomerCount.toString(),
