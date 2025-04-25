@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:orderapp/customersearchform.dart';
+import 'package:orderapp/ledgerform.dart';
 import 'package:orderapp/productlist.dart';
 import 'dart:convert';
 
@@ -137,6 +138,10 @@ class _CreateBranchState extends State<CreateLedger> {
 
         if (responseData.containsKey('id')) {
           _showSnackBar('Ledger created successfully');
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => Ledger()),
+          );
         } else if (responseData.containsKey('error')) {
           _showSnackBar('Error: ${responseData['error']}');
         }
@@ -257,7 +262,14 @@ class _CreateBranchState extends State<CreateLedger> {
                             SizedBox(
                               width: 150,
                               child: ElevatedButton(
-                                onPressed: () {},
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => Ledger(),
+                                    ),
+                                  );
+                                },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.red,
                                 ),

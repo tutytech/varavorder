@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:orderapp/customersearchform.dart';
+import 'package:orderapp/ledgerform.dart';
 import 'dart:convert';
 
 import 'package:orderapp/widgets/customappbar.dart';
@@ -147,7 +148,10 @@ class _CreateBranchState extends State<EditLedger> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Ledger updated successfully!')),
           );
-          Navigator.pop(context, true); // Return to the previous screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => Ledger()),
+          ); // Return to the previous screen
         } else {
           _showError(result[0]['message'] ?? 'Failed to update scheme.');
         }
