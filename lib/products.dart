@@ -200,7 +200,7 @@ class _CreateBranchState extends State<products> {
                               ),
                               value: selectedPurchaseUnit,
                               items:
-                                  ["Unit 1", "Unit 2", "Unit 3"]
+                                  ["Piece", "Dozen", "Box", "Bag"]
                                       .map(
                                         (e) => DropdownMenuItem(
                                           value: e,
@@ -253,7 +253,7 @@ class _CreateBranchState extends State<products> {
                               ),
                               value: selectedSalesUnit,
                               items:
-                                  ["Unit 1", "Unit 2", "Unit 3"]
+                                  ["Piece", "Dozen", "Box", "Bag"]
                                       .map(
                                         (e) => DropdownMenuItem(
                                           value: e,
