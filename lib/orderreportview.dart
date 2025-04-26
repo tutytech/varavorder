@@ -190,84 +190,64 @@ class _BranchListPageState extends State<Orderreportview> {
     return true;
   }
 
-  Future<void> _downloadExcelReport(List<Map<String, dynamic>> data) async {
-    print('download1');
+  Future<void> _downloadExcelReport(List<Map<String, dynamic>> branches) async {
+    try {
+      var status = await Permission.storage.request();
+      if (!status.isGranted) {
+        print('❌ Storage permission denied');
+        return;
+      }
 
-    if (kIsWeb) {
-      print('download2');
-      ScaffoldMessenger.of(globalNavigatorKey.currentContext!).showSnackBar(
-        const SnackBar(content: Text("Download is not supported on Web")),
-      );
-      return;
-    }
+      var excel = Excel.createExcel();
+      Sheet sheetObject = excel['Report'];
 
-    final isGranted = await requestStoragePermission();
-    if (!isGranted) {
-      print('download3');
-      print("❌ Storage permission not granted");
-      ScaffoldMessenger.of(globalNavigatorKey.currentContext!).showSnackBar(
-        const SnackBar(
-          content: Text("Storage permission is required to download the file."),
-        ),
-      );
-      return;
-    }
-
-    // 📊 Create Excel
-    final excel = Excel.createExcel();
-    final Sheet sheet = excel['Order Report'];
-
-    sheet.appendRow([
-      TextCellValue("ID"),
-      TextCellValue("Order No"),
-      TextCellValue("Order Date"),
-      TextCellValue("Customer Name"),
-      TextCellValue("Bill Amount"),
-    ]);
-
-    for (var branch in data) {
-      sheet.appendRow([
-        TextCellValue(branch['id']?.toString() ?? ''),
-        TextCellValue(branch['orderno'] ?? ''),
-        TextCellValue(branch['orderdate'] ?? ''),
-        TextCellValue(branch['customername'] ?? ''),
-        TextCellValue(branch['billamount']?.toString() ?? ''),
+      // Add header row
+      sheetObject.appendRow([
+        TextCellValue('ID'),
+        TextCellValue('Order No'),
+        TextCellValue('Order Date'),
+        TextCellValue('Customer Name'),
+        TextCellValue('Bill Amount'),
       ]);
-    }
 
-    Directory? dir;
-    if (Platform.isAndroid) {
-      dir = Directory('/storage/emulated/0/Download');
-    } else {
-      dir = await getApplicationDocumentsDirectory(); // fallback for iOS or web
-    }
+      // Add data rows
+      for (var branch in branches) {
+        sheetObject.appendRow([
+          TextCellValue(branch['id']?.toString() ?? ''),
+          TextCellValue(branch['orderno']?.toString() ?? ''),
+          TextCellValue(branch['orderdate']?.toString() ?? ''),
+          TextCellValue(branch['customername']?.toString() ?? ''),
+          TextCellValue(branch['billamount']?.toString() ?? ''),
+        ]);
+      }
 
-    if (dir == null) {
-      print('download4');
-      print("❌ Failed to get external storage directory.");
-      ScaffoldMessenger.of(globalNavigatorKey.currentContext!).showSnackBar(
-        const SnackBar(content: Text("Failed to access storage directory")),
+      var bytes = excel.encode();
+      if (bytes == null) {
+        print('❌ Excel encoding failed');
+        return;
+      }
+
+      Directory? directory;
+      if (Platform.isAndroid) {
+        directory = await getExternalStorageDirectory();
+      } else {
+        directory = await getApplicationDocumentsDirectory();
+      }
+
+      String dirPath = directory!.path;
+      String filePath =
+          '$dirPath/Report_${DateTime.now().millisecondsSinceEpoch}.xlsx';
+      File file = File(filePath);
+
+      await file.writeAsBytes(bytes);
+
+      print('✅ Report downloaded at: $filePath');
+      ScaffoldMessenger.of(_scaffoldKey.currentContext!).showSnackBar(
+        SnackBar(content: Text('Report downloaded: ${file.path}')),
       );
-      return;
+    } catch (e) {
+      print('❌ Error downloading Excel report: $e');
     }
-
-    final path = "${dir.path}/OrderReport.xlsx";
-    final file =
-        File(path)
-          ..createSync(recursive: true)
-          ..writeAsBytesSync(excel.encode()!);
-
-    print("✅ Excel saved at: $path");
-
-    ScaffoldMessenger.of(globalNavigatorKey.currentContext!).showSnackBar(
-      const SnackBar(
-        content: Text("Excel file saved successfully! Opening..."),
-      ),
-    );
-
-    // ✅ Open the file
-    final result = await OpenFile.open(path);
-    print("📂 OpenFile result: ${result.message}");
   }
 
   @override
@@ -653,9 +633,11 @@ class _BranchListPageState extends State<Orderreportview> {
                                                 ),
                                                 DataCell(
                                                   Text(
-                                                    branch['orderno'] ?? 'N/A',
+                                                    (branch['orderno'] ?? 'N/A')
+                                                        .toString(),
                                                   ),
                                                 ),
+
                                                 DataCell(
                                                   Text(
                                                     branch['orderdate'] ??
