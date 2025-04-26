@@ -40,6 +40,7 @@ class _CreateBranchState extends State<Editproducts> {
   String? selectedGstType;
   String? selectedRights;
   String? selectedPurchaseUnit;
+  String? selectedGroup;
   String? selectedSalesUnit;
   List<Map<String, dynamic>> product = [];
   bool isLoading = true;
@@ -137,7 +138,7 @@ class _CreateBranchState extends State<Editproducts> {
     qtyController.text = branch['purchaseqty'] ?? '';
     selectedSalesUnit = branch['salesunit'] ?? '';
     noOfKgsController.text = branch['salesqty'] ?? '';
-    groupController.text = branch['group'] ?? '';
+    selectedGroup = branch['group'] ?? '';
     salesRateController.text = branch['salesrate'] ?? '';
     wholeSaleRateController.text = branch['wholesalerate'] ?? '';
     purchaseRateController.text = branch['purchaserate'] ?? '';
@@ -163,7 +164,7 @@ class _CreateBranchState extends State<Editproducts> {
             productNameController.text.isNotEmpty
                 ? productNameController.text
                 : "N/A",
-        'group': groupController.text.isNotEmpty ? groupController.text : "N/A",
+        'group': selectedGroup ?? "N/A",
         'purchaseunit': selectedPurchaseUnit ?? "N/A",
         'purchaseqty': qtyController.text.isNotEmpty ? qtyController.text : "0",
         'salesunit': selectedSalesUnit ?? "N/A",
@@ -285,7 +286,7 @@ class _CreateBranchState extends State<Editproducts> {
                               ),
                               value: selectedPurchaseUnit,
                               items:
-                                  ["Unit 1", "Unit 2", "Unit 3"]
+                                  ["Piece", "Dozen", "Box", "Bag"]
                                       .map(
                                         (e) => DropdownMenuItem(
                                           value: e,
@@ -298,6 +299,11 @@ class _CreateBranchState extends State<Editproducts> {
                                   selectedPurchaseUnit = value;
                                 });
                               },
+                              validator:
+                                  (value) =>
+                                      value == null
+                                          ? 'Select purchase unit'
+                                          : null,
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -328,7 +334,7 @@ class _CreateBranchState extends State<Editproducts> {
                               ),
                               value: selectedSalesUnit,
                               items:
-                                  ["Unit 1", "Unit 2", "Unit 3"]
+                                  ["Piece", "Dozen", "Box", "Bag"]
                                       .map(
                                         (e) => DropdownMenuItem(
                                           value: e,
@@ -341,6 +347,11 @@ class _CreateBranchState extends State<Editproducts> {
                                   selectedSalesUnit = value;
                                 });
                               },
+                              validator:
+                                  (value) =>
+                                      value == null
+                                          ? 'Select sales unit'
+                                          : null,
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -360,14 +371,40 @@ class _CreateBranchState extends State<Editproducts> {
                       const SizedBox(height: 16),
 
                       // Sales Rate
-                      TextFormField(
-                        controller: groupController,
+                      DropdownButtonFormField<String>(
                         decoration: const InputDecoration(
                           labelText: "Group",
                           border: OutlineInputBorder(),
                         ),
-                        keyboardType: TextInputType.number,
+                        value:
+                            [
+                                  "Oil",
+                                  "Soap",
+                                  "Rice",
+                                  "Sugar",
+                                  "Snacks",
+                                ].contains(selectedGroup)
+                                ? selectedGroup
+                                : null,
+                        items:
+                            ["Oil", "Soap", "Rice", "Sugar", "Snacks"]
+                                .map(
+                                  (group) => DropdownMenuItem(
+                                    value: group,
+                                    child: Text(group),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedGroup = value;
+                          });
+                        },
+                        validator:
+                            (value) =>
+                                value == null ? 'Select product group' : null,
                       ),
+
                       const SizedBox(height: 16),
 
                       // Sales Rate

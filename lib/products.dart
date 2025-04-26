@@ -41,6 +41,7 @@ class _CreateBranchState extends State<products> {
   String? selectedRights;
   String? selectedPurchaseUnit;
   String? selectedSalesUnit;
+  String? selectedGroup;
   // @override
   // void didChangeDependencies() {
   //   super.didChangeDependencies();
@@ -66,7 +67,7 @@ class _CreateBranchState extends State<products> {
             productNameController.text.isNotEmpty
                 ? productNameController.text
                 : "N/A",
-        'group': groupController.text.isNotEmpty ? groupController.text : "N/A",
+        'group': selectedGroup ?? "N/A",
         'purchaseunit': selectedPurchaseUnit ?? "N/A",
         'purchaseqty': qtyController.text.isNotEmpty ? qtyController.text : "0",
         'salesunit': selectedSalesUnit ?? "N/A",
@@ -279,7 +280,7 @@ class _CreateBranchState extends State<products> {
                             child: TextFormField(
                               controller: noOfKgsController,
                               decoration: const InputDecoration(
-                                labelText: "No of KGS",
+                                labelText: "No of KGS/LTRS",
                                 border: OutlineInputBorder(),
                               ),
                               keyboardType: TextInputType.number,
@@ -294,18 +295,31 @@ class _CreateBranchState extends State<products> {
                       ),
                       const SizedBox(height: 16),
 
-                      TextFormField(
-                        controller: groupController,
+                      DropdownButtonFormField<String>(
                         decoration: const InputDecoration(
                           labelText: "Group",
                           border: OutlineInputBorder(),
                         ),
+                        value: selectedGroup,
+                        items:
+                            ["Oil", "Soap", "Rice", "Sugar", "Snacks"]
+                                .map(
+                                  (group) => DropdownMenuItem(
+                                    value: group,
+                                    child: Text(group),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedGroup = value;
+                          });
+                        },
                         validator:
                             (value) =>
-                                value == null || value.isEmpty
-                                    ? 'Enter group'
-                                    : null,
+                                value == null ? 'Select product group' : null,
                       ),
+
                       const SizedBox(height: 16),
 
                       TextFormField(
