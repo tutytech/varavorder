@@ -103,9 +103,10 @@ class _BranchListPageState extends State<productlist> {
         _filteredBranches =
             _allBranches
                 .where(
-                  (branch) => branch['name'].toString().toLowerCase().contains(
-                    query.toLowerCase(),
-                  ),
+                  (branch) => branch['productname']
+                      .toString()
+                      .toLowerCase()
+                      .contains(query.toLowerCase()),
                 )
                 .toList();
       }
@@ -204,7 +205,7 @@ class _BranchListPageState extends State<productlist> {
                         contentPadding: EdgeInsets.symmetric(horizontal: 16.0),
                       ),
                       style: TextStyle(
-                        color: Colors.white,
+                        color: Colors.black,
                       ), // Ensures the input text is also white
                     ),
                   ),

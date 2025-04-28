@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:orderapp/customersearchform.dart';
+import 'package:orderapp/grplist.dart';
 import 'package:orderapp/ledgerform.dart';
 import 'package:orderapp/productlist.dart';
 import 'dart:convert';
@@ -129,7 +130,7 @@ class _CreateBranchState extends State<CreateGroup> {
           _showSnackBar('Group created successfully');
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => Ledger()),
+            MaterialPageRoute(builder: (context) => Grouplist()),
           );
         } else if (responseData.containsKey('error')) {
           _showSnackBar('Error: ${responseData['error']}');
@@ -239,7 +240,12 @@ class _CreateBranchState extends State<CreateGroup> {
                               width: 150,
                               child: ElevatedButton(
                                 onPressed: () {
-                                  Navigator.pop(context);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => Grouplist(),
+                                    ),
+                                  );
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.red,

@@ -158,9 +158,10 @@ class _BranchListPageState extends State<Ledger> {
         _filteredBranches =
             _allBranches
                 .where(
-                  (branch) => branch['name'].toString().toLowerCase().contains(
-                    query.toLowerCase(),
-                  ),
+                  (branch) => branch['customername']
+                      .toString()
+                      .toLowerCase()
+                      .contains(query.toLowerCase()),
                 )
                 .toList();
       }
@@ -210,7 +211,7 @@ class _BranchListPageState extends State<Ledger> {
                         contentPadding: EdgeInsets.symmetric(horizontal: 16.0),
                       ),
                       style: TextStyle(
-                        color: Colors.white,
+                        color: Colors.black,
                       ), // Ensures the input text is also white
                     ),
                   ),

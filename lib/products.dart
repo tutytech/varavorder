@@ -42,11 +42,73 @@ class _CreateBranchState extends State<products> {
   String? selectedPurchaseUnit;
   String? selectedSalesUnit;
   String? selectedGroup;
-  // @override
-  // void didChangeDependencies() {
-  //   super.didChangeDependencies();
-  //   fetchBranches(); // Fetch branches when the widget dependencies change
-  // }
+  List<String> groupNames = [];
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    fetchGroupsFromApi(); // Fetch branches when the widget dependencies change
+  }
+
+  Future<List<String>> fetchGroups() async {
+    const String _baseUrl = 'https://varav.tutytech.in/group.php';
+
+    // Get SharedPreferences instance
+    final prefs = await SharedPreferences.getInstance();
+    final companyId = prefs.getString('companyid');
+
+    // Ensure the companyId is not null or empty
+    if (companyId == null || companyId.isEmpty) {
+      throw Exception("Company ID is missing.");
+    }
+
+    final Map<String, String> requestBody = {
+      'type': 'select',
+      'companyid': companyId, // Add companyid here
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse(_baseUrl),
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: requestBody,
+      );
+
+      if (response.statusCode == 200) {
+        final decodedResponse = json.decode(response.body);
+
+        if (decodedResponse is Map<String, dynamic> &&
+            decodedResponse.containsKey('data')) {
+          final data = decodedResponse['data'];
+          if (data is List) {
+            // Assuming each item in 'data' contains a 'groupname' field
+            return List<String>.from(
+              data.map((item) => item['groupname'] ?? ''),
+            );
+          } else {
+            throw Exception('Expected "data" to be a List');
+          }
+        } else {
+          throw Exception('Unexpected response format');
+        }
+      } else {
+        throw Exception('Failed to fetch groups (HTTP ${response.statusCode})');
+      }
+    } catch (e) {
+      throw Exception('Error occurred: $e');
+    }
+  }
+
+  // Fetch groups and update the state
+  Future<void> fetchGroupsFromApi() async {
+    try {
+      List<String> groups = await fetchGroups();
+      setState(() {
+        groupNames = groups; // Save the group names to the list
+      });
+    } catch (e) {
+      print('Error fetching groups: $e');
+    }
+  }
 
   Future<void> _createProducts() async {
     final prefs = await SharedPreferences.getInstance();
@@ -302,7 +364,7 @@ class _CreateBranchState extends State<products> {
                         ),
                         value: selectedGroup,
                         items:
-                            ["Oil", "Soap", "Rice", "Sugar", "Snacks"]
+                            groupNames
                                 .map(
                                   (group) => DropdownMenuItem(
                                     value: group,
@@ -312,7 +374,7 @@ class _CreateBranchState extends State<products> {
                                 .toList(),
                         onChanged: (value) {
                           setState(() {
-                            selectedGroup = value;
+                            selectedGroup = value; // Update selected group
                           });
                         },
                         validator:
