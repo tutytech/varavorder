@@ -14,6 +14,7 @@ import 'package:orderapp/widgets/customnavigation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:open_file/open_file.dart';
+import 'package:path/path.dart' as p;
 
 class Orderreportview extends StatefulWidget {
   final String? name, fromDate, toDate;
@@ -227,24 +228,30 @@ class _BranchListPageState extends State<Orderreportview> {
         return;
       }
 
-      Directory? directory;
+      Directory? downloadsDir;
+
       if (Platform.isAndroid) {
-        directory = await getExternalStorageDirectory();
+        downloadsDir = Directory('/storage/emulated/0/Download');
       } else {
-        directory = await getApplicationDocumentsDirectory();
+        downloadsDir = await getApplicationDocumentsDirectory();
       }
 
-      String dirPath = directory!.path;
-      String filePath =
-          '$dirPath/Report_${DateTime.now().millisecondsSinceEpoch}.xlsx';
+      if (!await downloadsDir.exists()) {
+        await downloadsDir.create(recursive: true);
+      }
+
+      String fileName = 'Report_${DateTime.now().millisecondsSinceEpoch}.xlsx';
+      String filePath = p.join(downloadsDir.path, fileName);
       File file = File(filePath);
 
       await file.writeAsBytes(bytes);
 
       print('✅ Report downloaded at: $filePath');
-      ScaffoldMessenger.of(_scaffoldKey.currentContext!).showSnackBar(
-        SnackBar(content: Text('Report downloaded: ${file.path}')),
-      );
+      if (_scaffoldKey.currentContext != null) {
+        ScaffoldMessenger.of(_scaffoldKey.currentContext!).showSnackBar(
+          SnackBar(content: Text('✅ Report downloaded: $fileName')),
+        );
+      }
     } catch (e) {
       print('❌ Error downloading Excel report: $e');
     }
