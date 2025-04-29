@@ -1,20 +1,22 @@
-import 'dart:io';
+import 'dart:convert';
+import 'dart:io' as io;
 
 import 'package:excel/excel.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'dart:convert';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+import 'package:syncfusion_flutter_xlsio/xlsio.dart' show Workbook, Worksheet;
 
 import 'package:orderapp/createledger.dart';
 import 'package:orderapp/customersearchform.dart';
 import 'package:orderapp/orderpage.dart';
 import 'package:orderapp/widgets/customnavigation.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:open_file/open_file.dart';
-import 'package:path/path.dart' as p;
+import 'package:universal_html/html.dart' as html;
 
 class Orderreportview extends StatefulWidget {
   final String? name, fromDate, toDate;
@@ -181,7 +183,7 @@ class _BranchListPageState extends State<Orderreportview> {
   }
 
   Future<bool> requestStoragePermission() async {
-    if (Platform.isAndroid) {
+    if (io.Platform.isAndroid) {
       var status = await Permission.manageExternalStorage.status;
       if (status.isGranted) return true;
 
@@ -191,69 +193,56 @@ class _BranchListPageState extends State<Orderreportview> {
     return true;
   }
 
-  Future<void> _downloadExcelReport(List<Map<String, dynamic>> branches) async {
-    try {
-      var status = await Permission.storage.request();
-      if (!status.isGranted) {
-        print('❌ Storage permission denied');
-        return;
-      }
+  Future<void> createExcel(List<Map<String, dynamic>> branches) async {
+    final Workbook workbook = Workbook();
+    final Worksheet sheet = workbook.worksheets[0];
 
-      var excel = Excel.createExcel();
-      Sheet sheetObject = excel['Report'];
+    // Set header row
+    sheet.getRangeByName('A1').setText('ID');
+    sheet.getRangeByName('B1').setText('Order No');
+    sheet.getRangeByName('C1').setText('Order Date');
+    sheet.getRangeByName('D1').setText('Customer Name');
+    sheet.getRangeByName('E1').setText('Bill Amount');
 
-      // Add header row
-      sheetObject.appendRow([
-        TextCellValue('ID'),
-        TextCellValue('Order No'),
-        TextCellValue('Order Date'),
-        TextCellValue('Customer Name'),
-        TextCellValue('Bill Amount'),
-      ]);
+    // Fill data rows
+    for (int i = 0; i < branches.length; i++) {
+      final branch = branches[i];
+      sheet
+          .getRangeByName('A${i + 2}')
+          .setText(branch['id']?.toString() ?? 'N/A');
+      sheet
+          .getRangeByName('B${i + 2}')
+          .setText(branch['orderno']?.toString() ?? 'N/A');
+      sheet.getRangeByName('C${i + 2}').setText(branch['orderdate'] ?? 'N/A');
+      sheet
+          .getRangeByName('D${i + 2}')
+          .setText(branch['customername'] ?? 'N/A');
+      sheet
+          .getRangeByName('E${i + 2}')
+          .setText(branch['billamount']?.toString() ?? 'N/A');
+    }
 
-      // Add data rows
-      for (var branch in branches) {
-        sheetObject.appendRow([
-          TextCellValue(branch['id']?.toString() ?? ''),
-          TextCellValue(branch['orderno']?.toString() ?? ''),
-          TextCellValue(branch['orderdate']?.toString() ?? ''),
-          TextCellValue(branch['customername']?.toString() ?? ''),
-          TextCellValue(branch['billamount']?.toString() ?? ''),
-        ]);
-      }
+    final List<int> bytes = workbook.saveAsStream();
+    workbook.dispose();
 
-      var bytes = excel.encode();
-      if (bytes == null) {
-        print('❌ Excel encoding failed');
-        return;
-      }
+    if (kIsWeb) {
+      // You need to import dart:html as html;
 
-      Directory? downloadsDir;
-
-      if (Platform.isAndroid) {
-        downloadsDir = Directory('/storage/emulated/0/Download');
-      } else {
-        downloadsDir = await getApplicationDocumentsDirectory();
-      }
-
-      if (!await downloadsDir.exists()) {
-        await downloadsDir.create(recursive: true);
-      }
-
-      String fileName = 'Report_${DateTime.now().millisecondsSinceEpoch}.xlsx';
-      String filePath = p.join(downloadsDir.path, fileName);
-      File file = File(filePath);
-
-      await file.writeAsBytes(bytes);
-
-      print('✅ Report downloaded at: $filePath');
-      if (_scaffoldKey.currentContext != null) {
-        ScaffoldMessenger.of(_scaffoldKey.currentContext!).showSnackBar(
-          SnackBar(content: Text('✅ Report downloaded: $fileName')),
-        );
-      }
-    } catch (e) {
-      print('❌ Error downloading Excel report: $e');
+      html.AnchorElement(
+          href:
+              'data:application/octet-stream;charset=utf-16le;base64,${base64.encode(bytes)}',
+        )
+        ..setAttribute('download', 'Branches.xlsx')
+        ..click();
+    } else {
+      final String path = (await getApplicationSupportDirectory()).path;
+      final String fileName =
+          io.Platform.isWindows
+              ? '$path\\Branches.xlsx'
+              : '$path/Branches.xlsx';
+      final io.File file = io.File(fileName);
+      await file.writeAsBytes(bytes, flush: true);
+      OpenFile.open(fileName);
     }
   }
 
@@ -473,7 +462,7 @@ class _BranchListPageState extends State<Orderreportview> {
                             return;
                           }
 
-                          await _downloadExcelReport(_filteredBranches);
+                          await createExcel(_filteredBranches);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
