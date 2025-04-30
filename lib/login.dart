@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:orderapp/createaccount.dart';
+import 'package:orderapp/forgotpassword.dart';
 import 'package:orderapp/homepage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -181,163 +182,169 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
-Future<void> _login() async {
-  final String email = _emailController.text.trim();
-  final String password = _passwordController.text.trim();
+  Future<void> _login() async {
+    final String email = _emailController.text.trim();
+    final String password = _passwordController.text.trim();
 
-  if (email.isEmpty || password.isEmpty) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Missing Fields"),
-        content: const Text("Please enter both email and password."),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text("OK"),
-          ),
-        ],
-      ),
-    );
-    return;
-  }
-
-  final String url = "https://varav.tutytech.in/user.php";
-
-  try {
-    final response = await http.post(
-      Uri.parse(url),
-      body: {
-        "type": "login",
-        "username": email,
-        "password": password,
-      },
-      headers: {"Content-Type": "application/x-www-form-urlencoded"},
-    );
-
-    print('Login Response Status Code: ${response.statusCode}');
-    print('Login Response Body: ${response.body.isEmpty ? "EMPTY RESPONSE" : response.body}');
-
-    if (response.statusCode == 200) {
-      if (response.body.isEmpty) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text("Server Error"),
-            content: const Text("Login failed. Server returned an empty response."),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text("OK"),
-              ),
-            ],
-          ),
-        );
-        return;
-      }
-
-      final List<dynamic> responseData = jsonDecode(response.body);
-
-      if (responseData.isNotEmpty &&
-          responseData[0] is Map<String, dynamic> &&
-          responseData[0]["id"] != null) {
-        String userId = responseData[0]["id"].toString();
-        String companyId = responseData[0]["companyid"].toString();
-
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString("userId", userId);
-        await prefs.setString("companyid", companyId);
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => FoodGoHome()),
-        );
-        print('Login Successfully');
-      } else {
-        // Show dialog with Register button
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text("Login Failed"),
-            content: const Text("Username and password do not exist. Please register."),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text("Cancel"),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context); // Close dialog
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => CreateAccountScreen()), // Replace with your register page
-                  );
-                },
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text("Register"),
-              ),
-            ],
-          ),
-        );
-      }
-    } else {
+    if (email.isEmpty || password.isEmpty) {
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text("Error"),
-          content: const Text("Login failed. Please try again."),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text("OK"),
+        builder:
+            (context) => AlertDialog(
+              title: const Text("Missing Fields"),
+              content: const Text("Please enter both email and password."),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text("OK"),
+                ),
+              ],
             ),
-          ],
-        ),
+      );
+      return;
+    }
+
+    final String url = "https://varav.tutytech.in/user.php";
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        body: {"type": "login", "username": email, "password": password},
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+      );
+
+      print('Login Response Status Code: ${response.statusCode}');
+      print(
+        'Login Response Body: ${response.body.isEmpty ? "EMPTY RESPONSE" : response.body}',
+      );
+
+      if (response.statusCode == 200) {
+        if (response.body.isEmpty) {
+          showDialog(
+            context: context,
+            builder:
+                (context) => AlertDialog(
+                  title: const Text("Server Error"),
+                  content: const Text(
+                    "Login failed. Server returned an empty response.",
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text("OK"),
+                    ),
+                  ],
+                ),
+          );
+          return;
+        }
+
+        final List<dynamic> responseData = jsonDecode(response.body);
+
+        if (responseData.isNotEmpty &&
+            responseData[0] is Map<String, dynamic> &&
+            responseData[0]["id"] != null) {
+          String userId = responseData[0]["id"].toString();
+          String companyId = responseData[0]["companyid"].toString();
+
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString("userId", userId);
+          await prefs.setString("companyid", companyId);
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => FoodGoHome()),
+          );
+          print('Login Successfully');
+        } else {
+          // Show dialog with Register button
+          showDialog(
+            context: context,
+            builder:
+                (context) => AlertDialog(
+                  title: const Text("Login Failed"),
+                  content: const Text(
+                    "Username and password do not exist. Please register.",
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text("Cancel"),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context); // Close dialog
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CreateAccountScreen(),
+                          ), // Replace with your register page
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text("Register"),
+                    ),
+                  ],
+                ),
+          );
+        }
+      } else {
+        showDialog(
+          context: context,
+          builder:
+              (context) => AlertDialog(
+                title: const Text("Error"),
+                content: const Text("Login failed. Please try again."),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text("OK"),
+                  ),
+                ],
+              ),
+        );
+      }
+    } catch (e) {
+      print('Login Error: $e');
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: const Text("Exception"),
+              content: Text("An error occurred: $e"),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text("OK"),
+                ),
+              ],
+            ),
       );
     }
-  } catch (e) {
-    print('Login Error: $e');
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Exception"),
-        content: Text("An error occurred: $e"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text("OK"),
-          ),
-        ],
-      ),
-    );
   }
-}
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -449,7 +456,14 @@ Future<void> _login() async {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ForgotPassword(),
+                          ),
+                        );
+                      },
                       child: const Text(
                         'Forgot Password?',
                         style: TextStyle(color: Colors.red),
