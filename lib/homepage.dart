@@ -134,7 +134,7 @@ class _FoodGoHomeState extends State<FoodGoHome> {
       // Prepare the request body with companyId
       final Map<String, String> requestBody = {
         'type': 'select',
-        'companyId': companyId,
+        'companyid': companyId,
       };
 
       final response = await http.post(

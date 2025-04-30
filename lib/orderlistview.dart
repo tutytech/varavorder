@@ -6,6 +6,7 @@ import 'package:orderapp/createledger.dart';
 import 'package:orderapp/customersearchform.dart';
 import 'package:orderapp/orderpage.dart';
 import 'package:orderapp/widgets/customnavigation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Orderlistview extends StatefulWidget {
   final String? name, id;
@@ -50,7 +51,7 @@ class _BranchListPageState extends State<Orderlistview> {
     super.dispose();
   }
 
-  Future<bool> cancelOrder(int orderId) async {
+  Future<bool> cancelOrder(int orderId, BuildContext context) async {
     final url = Uri.parse('https://varav.tutytech.in/orderconfirm.php');
 
     final response = await http.post(
@@ -61,17 +62,40 @@ class _BranchListPageState extends State<Orderlistview> {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return data['success'] == true;
+
+      if (data['success'] == true) {
+        setState(() {
+          _branchListFuture = fetchTotalOrders(); // Refresh list
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Order cancelled successfully')),
+        );
+        return true;
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Failed to cancel order')));
+        return false;
+      }
     } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to cancel order')));
       return false;
     }
   }
 
   Future<List<Map<String, dynamic>>> fetchTotalOrders() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? companyId = prefs.getString('companyid');
     String apiUrl = 'https://varav.tutytech.in/orderconfirm.php'; // API URL
 
     try {
-      final Map<String, String> requestBody = {'type': 'select'};
+      final Map<String, String> requestBody = {
+        'type': 'select',
+        'companyid': companyId.toString(),
+      };
 
       final response = await http.post(
         Uri.parse(apiUrl),
@@ -341,7 +365,11 @@ class _BranchListPageState extends State<Orderlistview> {
                                                   0;
                                               if (orderId != 0) {
                                                 bool success =
-                                                    await cancelOrder(orderId);
+                                                    await cancelOrder(
+                                                      orderId,
+                                                      context,
+                                                    );
+
                                                 if (success) {
                                                   print(
                                                     'Order $orderId canceled successfully',
