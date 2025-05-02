@@ -53,7 +53,10 @@ class _CreateBranchState extends State<PasswordUpdate> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text("Password reset successful")));
-        Navigator.push(context, MaterialPageRoute(builder: (_) => Login()));
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => LoginScreen()),
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Error: ${responseData[0]['error']}")),
